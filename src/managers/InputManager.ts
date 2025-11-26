@@ -762,9 +762,9 @@ export class InputManager {
   private onDeviceOrientation(event: DeviceOrientationEvent): void {
     if (!this.gyroEnabled) return;
 
-    // alpha: 0-360 (compass direction, Z-axis)
-    // beta: -180 to 180 (front-back tilt, X-axis) - 0 when flat, 90 when vertical
-    // gamma: -90 to 90 (left-right tilt, Y-axis)
+    // alpha: 0-360 (compass direction, Z-axis) - turning phone left/right
+    // beta: -180 to 180 (front-back tilt, X-axis) - tilting phone forward/back
+    // gamma: -90 to 90 (left-right tilt, Y-axis) - tilting phone sideways
 
     const alpha = event.alpha ?? 0;
     const beta = event.beta ?? 0;
@@ -773,7 +773,6 @@ export class InputManager {
     // Store initial orientation on first reading
     if (this.gyroInitialAlpha === null) {
       this.gyroInitialAlpha = alpha;
-      // Assume phone is held at ~45-60 degree angle when starting
       this.gyroInitialBeta = beta;
     }
 
@@ -782,28 +781,29 @@ export class InputManager {
     this.gyroGamma = gamma;
 
     // Calculate relative orientation from initial position
-    // Yaw: horizontal rotation (left-right look)
-    let deltaAlpha = alpha - this.gyroInitialAlpha;
-    // Normalize to -180 to 180
-    if (deltaAlpha > 180) deltaAlpha -= 360;
-    if (deltaAlpha < -180) deltaAlpha += 360;
+    // Yaw: Use gamma (left-right tilt) for horizontal look
+    // This is more intuitive - tilt phone left to look left
+    const yawFromGamma = gamma; // -90 to 90
 
-    // Pitch: vertical rotation (up-down look)
-    // When phone tilts forward (beta increases), look down
-    // When phone tilts back (beta decreases), look up
+    // Pitch: Use beta difference for vertical look
+    // Tilt phone forward to look down, back to look up
     const deltaBeta = beta - (this.gyroInitialBeta ?? 45);
 
-    // Sensitivity adjustment
-    const yawSensitivity = 1.0;
-    const pitchSensitivity = 0.8;
+    // Sensitivity adjustment - reduced for easier control
+    const yawSensitivity = 0.6;  // Lower = easier to control
+    const pitchSensitivity = 0.4; // Lower = easier to control
 
-    // Update input state with gyro values
-    // Invert yaw so turning phone right looks right
-    this.inputState.gyroYaw = -deltaAlpha * yawSensitivity;
-    // Invert pitch so tilting phone forward looks down
-    this.inputState.gyroPitch = -deltaBeta * pitchSensitivity;
-    // Roll from gamma (phone tilt left-right)
-    this.inputState.gyroRoll = gamma * 0.5;
+    // Clamp values for more controlled movement
+    const maxYaw = 45;   // Max degrees of yaw from gyro
+    const maxPitch = 30; // Max degrees of pitch from gyro
+
+    // Update input state with gyro values (clamped)
+    // Yaw: tilt phone left/right
+    this.inputState.gyroYaw = Math.max(-maxYaw, Math.min(maxYaw, -yawFromGamma * yawSensitivity));
+    // Pitch: tilt phone forward/back
+    this.inputState.gyroPitch = Math.max(-maxPitch, Math.min(maxPitch, -deltaBeta * pitchSensitivity));
+    // Roll: disabled for simpler control
+    this.inputState.gyroRoll = 0;
   }
 
   /**
