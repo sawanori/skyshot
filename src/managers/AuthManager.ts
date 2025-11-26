@@ -387,6 +387,32 @@ export class AuthManager {
   }
 
   /**
+   * Get the current user's nickname/username from profiles table.
+   */
+  public async getNickname(): Promise<string | null> {
+    try {
+      const user = await this.getCurrentUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('[AuthManager] Failed to get nickname:', error.message);
+        return null;
+      }
+
+      return data?.username || null;
+    } catch (err) {
+      console.error('[AuthManager] Unexpected error getting nickname:', err);
+      return null;
+    }
+  }
+
+  /**
    * Get user-friendly error message.
    */
   private getErrorMessage(errorMessage: string): string {

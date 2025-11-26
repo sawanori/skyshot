@@ -1494,6 +1494,118 @@
       box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
     }
 
+    /* Nickname Section */
+    .nickname-section {
+      margin-bottom: 18px;
+      padding: 12px;
+      background: rgba(255, 0, 255, 0.05);
+      border: 1px solid rgba(255, 0, 255, 0.2);
+    }
+
+    .nickname-display {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nickname-label {
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: rgba(255, 0, 255, 0.6);
+    }
+
+    .nickname-value {
+      flex: 1;
+      font-size: 16px;
+      font-weight: bold;
+      color: #f0f;
+      text-shadow: 0 0 8px rgba(255, 0, 255, 0.5);
+      letter-spacing: 2px;
+    }
+
+    .nickname-edit-btn {
+      padding: 4px 10px;
+      background: transparent;
+      border: 1px solid rgba(0, 255, 255, 0.4);
+      color: #0ff;
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nickname-edit-btn:hover {
+      background: rgba(0, 255, 255, 0.15);
+      border-color: #0ff;
+    }
+
+    .nickname-edit {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .nickname-input {
+      padding: 10px 12px;
+      background: rgba(0, 10, 20, 0.8);
+      border: 1px solid rgba(255, 0, 255, 0.4);
+      color: #f0f;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-align: center;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    .nickname-input:focus {
+      border-color: #f0f;
+      box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+    }
+
+    .nickname-input::placeholder {
+      color: rgba(255, 0, 255, 0.3);
+    }
+
+    .nickname-edit-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .nickname-save-btn,
+    .nickname-cancel-btn {
+      padding: 6px 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nickname-save-btn {
+      background: rgba(0, 255, 0, 0.1);
+      border: 1px solid #0f0;
+      color: #0f0;
+    }
+
+    .nickname-save-btn:hover {
+      background: rgba(0, 255, 0, 0.25);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+
+    .nickname-cancel-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 85, 85, 0.5);
+      color: #f55;
+    }
+
+    .nickname-cancel-btn:hover {
+      background: rgba(255, 85, 85, 0.15);
+      border-color: #f55;
+    }
+
     /* ========== PAUSE MENU STYLES ========== */
     #pause-button {
       position: absolute;
@@ -1839,6 +1951,22 @@
         <!-- Modal Title -->
         <h2 class="history-modal-title">FLIGHT LOG</h2>
         <div class="history-modal-divider"></div>
+
+        <!-- Nickname Section -->
+        <div class="nickname-section">
+          <div class="nickname-display" id="nickname-display">
+            <span class="nickname-label">CALLSIGN</span>
+            <span class="nickname-value" id="nickname-value">Unknown Pilot</span>
+            <button class="nickname-edit-btn" id="nickname-edit-btn">EDIT</button>
+          </div>
+          <div class="nickname-edit" id="nickname-edit" style="display: none;">
+            <input type="text" id="nickname-input" class="nickname-input" maxlength="12" placeholder="Enter callsign">
+            <div class="nickname-edit-buttons">
+              <button class="nickname-save-btn" id="nickname-save-btn">SAVE</button>
+              <button class="nickname-cancel-btn" id="nickname-cancel-btn">CANCEL</button>
+            </div>
+          </div>
+        </div>
 
         <!-- Stats Summary -->
         <div class="history-summary">

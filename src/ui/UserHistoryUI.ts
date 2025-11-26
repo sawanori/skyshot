@@ -2,9 +2,11 @@
  * UserHistoryUI.ts - User History Modal Controller
  *
  * Displays the user's game history with scores and dates.
+ * Also handles nickname display and editing.
  */
 
 import { LeaderboardManager } from '../managers/LeaderboardManager';
+import { AuthManager } from '../managers/AuthManager';
 
 interface HistoryEntry {
   score: number;
@@ -14,6 +16,7 @@ interface HistoryEntry {
 export class UserHistoryUI {
   private static instance: UserHistoryUI;
   private leaderboardManager: LeaderboardManager;
+  private authManager: AuthManager;
 
   // DOM Elements
   private historyModal: HTMLElement | null = null;
@@ -25,8 +28,18 @@ export class UserHistoryUI {
   private historyBestScore: HTMLElement | null = null;
   private historyAvgScore: HTMLElement | null = null;
 
+  // Nickname elements
+  private nicknameDisplay: HTMLElement | null = null;
+  private nicknameValue: HTMLElement | null = null;
+  private nicknameEditBtn: HTMLElement | null = null;
+  private nicknameEdit: HTMLElement | null = null;
+  private nicknameInput: HTMLInputElement | null = null;
+  private nicknameSaveBtn: HTMLElement | null = null;
+  private nicknameCancelBtn: HTMLElement | null = null;
+
   private constructor() {
     this.leaderboardManager = LeaderboardManager.getInstance();
+    this.authManager = AuthManager.getInstance();
   }
 
   public static getInstance(): UserHistoryUI {
@@ -50,6 +63,15 @@ export class UserHistoryUI {
     this.historyTotalPlays = document.getElementById('history-total-plays');
     this.historyBestScore = document.getElementById('history-best-score');
     this.historyAvgScore = document.getElementById('history-avg-score');
+
+    // Nickname elements
+    this.nicknameDisplay = document.getElementById('nickname-display');
+    this.nicknameValue = document.getElementById('nickname-value');
+    this.nicknameEditBtn = document.getElementById('nickname-edit-btn');
+    this.nicknameEdit = document.getElementById('nickname-edit');
+    this.nicknameInput = document.getElementById('nickname-input') as HTMLInputElement;
+    this.nicknameSaveBtn = document.getElementById('nickname-save-btn');
+    this.nicknameCancelBtn = document.getElementById('nickname-cancel-btn');
   }
 
   private bindEvents(): void {
@@ -63,10 +85,25 @@ export class UserHistoryUI {
         this.closeModal();
       }
     });
+
+    // Nickname edit events
+    this.nicknameEditBtn?.addEventListener('click', () => this.showNicknameEdit());
+    this.nicknameSaveBtn?.addEventListener('click', () => this.saveNickname());
+    this.nicknameCancelBtn?.addEventListener('click', () => this.hideNicknameEdit());
+    this.nicknameInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.saveNickname();
+      }
+      if (e.key === 'Escape') {
+        this.hideNicknameEdit();
+      }
+    });
   }
 
   private async openModal(): Promise<void> {
     this.historyModal?.classList.add('visible');
+    await this.loadNickname();
     await this.loadHistory();
   }
 
@@ -191,6 +228,71 @@ export class UserHistoryUI {
     }
     if (this.historyEmpty) {
       this.historyEmpty.style.display = 'none';
+    }
+  }
+
+  // Nickname methods
+  private async loadNickname(): Promise<void> {
+    try {
+      const nickname = await this.authManager.getNickname();
+      if (this.nicknameValue) {
+        this.nicknameValue.textContent = nickname || 'Unknown Pilot';
+      }
+    } catch (err) {
+      console.error('[UserHistoryUI] Failed to load nickname:', err);
+      if (this.nicknameValue) {
+        this.nicknameValue.textContent = 'Unknown Pilot';
+      }
+    }
+  }
+
+  private showNicknameEdit(): void {
+    if (this.nicknameDisplay) {
+      this.nicknameDisplay.style.display = 'none';
+    }
+    if (this.nicknameEdit) {
+      this.nicknameEdit.style.display = 'block';
+    }
+    if (this.nicknameInput && this.nicknameValue) {
+      this.nicknameInput.value = this.nicknameValue.textContent || '';
+      this.nicknameInput.focus();
+      this.nicknameInput.select();
+    }
+  }
+
+  private hideNicknameEdit(): void {
+    if (this.nicknameDisplay) {
+      this.nicknameDisplay.style.display = 'flex';
+    }
+    if (this.nicknameEdit) {
+      this.nicknameEdit.style.display = 'none';
+    }
+  }
+
+  private async saveNickname(): Promise<void> {
+    const newNickname = this.nicknameInput?.value.trim();
+
+    if (!newNickname) {
+      return;
+    }
+
+    try {
+      const result = await this.authManager.updateUsername(newNickname);
+
+      if (result.success) {
+        if (this.nicknameValue) {
+          this.nicknameValue.textContent = newNickname;
+        }
+        this.hideNicknameEdit();
+
+        // Also update the auth status display
+        const { AuthUI } = await import('./AuthUI');
+        AuthUI.getInstance().updateAuthStatus();
+      } else {
+        console.error('[UserHistoryUI] Failed to save nickname:', result.error);
+      }
+    } catch (err) {
+      console.error('[UserHistoryUI] Unexpected error saving nickname:', err);
     }
   }
 }

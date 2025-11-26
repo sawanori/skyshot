@@ -223,7 +223,7 @@ export class AuthUI {
     }
   }
 
-  public updateAuthStatus(): void {
+  public async updateAuthStatus(): Promise<void> {
     const isAuthenticated = this.authManager.isAuthenticated();
     const isAnonymous = this.authManager.isAnonymous();
     const email = this.authManager.getUserEmail();
@@ -233,10 +233,19 @@ export class AuthUI {
       if (this.authStatus) {
         this.authStatus.classList.add('logged-in');
       }
+
+      // Try to get nickname first, fallback to email
+      const nickname = await this.authManager.getNickname();
       if (this.authStatusText) {
-        // Show truncated email
-        const displayEmail = email.length > 20 ? email.substring(0, 17) + '...' : email;
-        this.authStatusText.textContent = displayEmail;
+        if (nickname && nickname !== 'Unknown Pilot') {
+          // Show nickname
+          const displayName = nickname.length > 12 ? nickname.substring(0, 10) + '...' : nickname;
+          this.authStatusText.textContent = displayName;
+        } else {
+          // Fallback to truncated email
+          const displayEmail = email.length > 20 ? email.substring(0, 17) + '...' : email;
+          this.authStatusText.textContent = displayEmail;
+        }
       }
 
       // Change buttons to show logout
