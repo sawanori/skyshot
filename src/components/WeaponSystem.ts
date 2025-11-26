@@ -52,8 +52,9 @@ export class WeaponSystem {
   // Reference to player controller for camera shake
   private playerController: PlayerController | null = null;
 
-  // Sound effects
-  private gunSound: HTMLAudioElement | null = null;
+  // Sound effects (Web Audio API for low latency)
+  private audioContext: AudioContext | null = null;
+  private gunSoundBuffer: AudioBuffer | null = null;
 
   constructor(entity: pc.Entity, app: pc.Application, config?: Partial<WeaponConfig>) {
     this.entity = entity;
@@ -74,20 +75,39 @@ export class WeaponSystem {
   }
 
   private loadGunSound(): void {
-    this.gunSound = new Audio('/assets/GunSound.mp3');
-    this.gunSound.volume = 0.5;
-    // Preload the audio
-    this.gunSound.load();
+    // Use Web Audio API for lower latency
+    this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+    fetch('/assets/GunSound.mp3')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => this.audioContext!.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        this.gunSoundBuffer = audioBuffer;
+      })
+      .catch(err => {
+        console.warn('Failed to load gun sound:', err);
+      });
   }
 
   private playGunSound(): void {
-    if (this.gunSound) {
-      // Clone the audio to allow overlapping sounds for rapid fire
-      const sound = this.gunSound.cloneNode() as HTMLAudioElement;
-      sound.volume = this.gunSound.volume;
-      sound.play().catch(() => {
-        // Ignore autoplay restrictions - sound will play after user interaction
-      });
+    if (this.audioContext && this.gunSoundBuffer) {
+      // Resume audio context if suspended (browser autoplay policy)
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume();
+      }
+
+      // Create buffer source for immediate playback
+      const source = this.audioContext.createBufferSource();
+      const gainNode = this.audioContext.createGain();
+
+      source.buffer = this.gunSoundBuffer;
+      gainNode.gain.value = 0.5;
+
+      source.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+
+      // Play immediately
+      source.start(0);
     }
   }
 
