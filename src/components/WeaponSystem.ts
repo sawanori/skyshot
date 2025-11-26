@@ -52,6 +52,9 @@ export class WeaponSystem {
   // Reference to player controller for camera shake
   private playerController: PlayerController | null = null;
 
+  // Sound effects
+  private gunSound: HTMLAudioElement | null = null;
+
   constructor(entity: pc.Entity, app: pc.Application, config?: Partial<WeaponConfig>) {
     this.entity = entity;
     this.app = app;
@@ -67,6 +70,25 @@ export class WeaponSystem {
     };
 
     this.createMuzzleFlash();
+    this.loadGunSound();
+  }
+
+  private loadGunSound(): void {
+    this.gunSound = new Audio('/src/assets/GunSound.mp3');
+    this.gunSound.volume = 0.5;
+    // Preload the audio
+    this.gunSound.load();
+  }
+
+  private playGunSound(): void {
+    if (this.gunSound) {
+      // Clone the audio to allow overlapping sounds for rapid fire
+      const sound = this.gunSound.cloneNode() as HTMLAudioElement;
+      sound.volume = this.gunSound.volume;
+      sound.play().catch(() => {
+        // Ignore autoplay restrictions - sound will play after user interaction
+      });
+    }
   }
 
   /**
@@ -144,6 +166,9 @@ export class WeaponSystem {
    * Fire the weapon
    */
   public fire(): void {
+    // Play gun sound effect
+    this.playGunSound();
+
     // Show muzzle flash
     if (this.muzzleFlash) {
       this.muzzleFlash.enabled = true;

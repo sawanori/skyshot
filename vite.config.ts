@@ -21,6 +21,6 @@ export default defineConfig({
     port: 3000,
     open: true,
     host: true,
-    https: true
+    https: false
   }
 });
