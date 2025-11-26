@@ -11,7 +11,7 @@ import { GameStateManager, GameState } from './managers/GameStateManager';
 import { GameManager } from './managers/GameManager';
 import { HUDManager } from './ui/HUDManager';
 import { createGridFloor, createDirectionalLight, configureSceneEnvironment } from './scene/SceneSetup';
-import { createEnemyWaves } from './managers/EnemyManager';
+import { EnemyManager } from './managers/EnemyManager';
 import { SCENE_CONFIG, CAMERA_CONFIG, PLAYER_CONFIG } from './config/GameConfig';
 
 // Global app reference
@@ -21,6 +21,7 @@ let app: pc.Application;
 let hudManager: HUDManager;
 let gameStateManager: GameStateManager;
 let gameManager: GameManager;
+let enemyManager: EnemyManager;
 
 // Player controller reference for HUD updates
 let playerControllerRef: PlayerController | null = null;
@@ -107,6 +108,9 @@ function setupUpdateLoop(): void {
       // Update GameManager for Score Attack timer
       gameManager.update(dt);
 
+      // Update EnemyManager for infinite enemy spawning
+      enemyManager.update(dt);
+
       if (playerControllerRef) {
         hudManager.setGameStartTime(gameStateManager.gameStartTime);
         hudManager.update({
@@ -129,7 +133,10 @@ function setupScene(): void {
   createDirectionalLight(app);
   configureSceneEnvironment(app);
   createGridFloor(app);
-  createEnemyWaves(app);
+
+  // Initialize EnemyManager with player reference for infinite spawn system
+  enemyManager = EnemyManager.getInstance();
+  enemyManager.initialize(app, camera);
 }
 
 /**

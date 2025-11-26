@@ -609,13 +609,11 @@ export class InputManager {
    * Update input from mouse and keyboard
    */
   private updateMouseKeyboardInput(): void {
-    // Keyboard movement (WASD)
+    // Keyboard movement (WASD) - S key removed (no backward movement)
     if (this.keys['KeyW']) {
       this.inputState.moveVector.y = 1;
     }
-    if (this.keys['KeyS']) {
-      this.inputState.moveVector.y = -1;
-    }
+    // S key disabled - enemies flow from front to back, no need for backward movement
     if (this.keys['KeyA']) {
       this.inputState.moveVector.x = -1;
     }
