@@ -228,7 +228,7 @@ export class GameStateManager {
     if (isInAppBrowser) {
       gyroButton.setAttribute('disabled', 'true');
       if (gyroStatus) {
-        gyroStatus.innerHTML = 'Safariで開いてください<br><small>右上メニュー → Safariで開く</small>';
+        gyroStatus.innerHTML = 'ブラウザで開いてください<br><small>右下 ⋮ → ブラウザで開く</small>';
       }
       return;
     }
