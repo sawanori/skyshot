@@ -1043,6 +1043,56 @@
       height: 100%;
       pointer-events: auto;
     }
+
+    /* Fire button (bottom-right) */
+    #fire-button {
+      position: absolute;
+      bottom: 100px;
+      right: 20px;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 100, 100, 0.9), rgba(200, 50, 50, 0.8));
+      border: 3px solid rgba(255, 100, 100, 0.8);
+      box-shadow:
+        0 0 15px rgba(255, 50, 50, 0.6),
+        inset 0 0 20px rgba(255, 200, 200, 0.3);
+      pointer-events: auto;
+      touch-action: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: transform 0.1s, box-shadow 0.1s;
+      z-index: 60;
+    }
+
+    #fire-button:active,
+    #fire-button.pressed {
+      transform: scale(0.9);
+      background: radial-gradient(circle at 30% 30%, rgba(255, 150, 150, 1), rgba(255, 80, 80, 0.9));
+      box-shadow:
+        0 0 25px rgba(255, 100, 100, 0.9),
+        inset 0 0 30px rgba(255, 255, 255, 0.4);
+    }
+
+    #fire-button::before {
+      content: '';
+      width: 30px;
+      height: 30px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fff'%3E%3Cpath d='M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 15h2v-2h-2v2zm0-4h2V7h-2v6z'/%3E%3C/svg%3E") center/contain no-repeat;
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.8));
+    }
+
+    #fire-button-label {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: #f88;
+      text-shadow: 0 0 5px #f00;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
@@ -1209,6 +1259,11 @@
           <span class="data-label">TGT</span>
           <span class="data-value" id="target-count">8</span>
         </div>
+      </div>
+
+      <!-- Fire button -->
+      <div id="fire-button">
+        <span id="fire-button-label">FIRE</span>
       </div>
 
       <!-- Touch control zones (must be on top for touch events) -->

@@ -62,7 +62,7 @@ export class InputManager {
   private readonly JOYSTICK_ZONE_WIDTH = 0.4;  // 40% of screen width
   private readonly ALTITUDE_ZONE_WIDTH = 0.15; // 15% of screen width (right edge)
   private readonly LOOK_SENSITIVITY = 0.3;
-  private readonly ALTITUDE_SENSITIVITY = 0.005;
+  private readonly ALTITUDE_SENSITIVITY = 0.02; // Increased for better mobile response
 
   // Fire state
   private fireButtonDown: boolean = false;
@@ -117,6 +117,41 @@ export class InputManager {
     canvas.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
     canvas.addEventListener('touchend', (e) => this.onTouchEnd(e), { passive: false });
     canvas.addEventListener('touchcancel', (e) => this.onTouchEnd(e), { passive: false });
+
+    // Set up fire button touch events
+    this.setupFireButton();
+  }
+
+  /**
+   * Set up fire button touch events
+   */
+  private setupFireButton(): void {
+    const fireButton = document.getElementById('fire-button');
+    if (!fireButton) return;
+
+    fireButton.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!this.fireButtonDown) {
+        this.fireButtonPressedThisFrame = true;
+      }
+      this.fireButtonDown = true;
+      fireButton.classList.add('pressed');
+    }, { passive: false });
+
+    fireButton.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.fireButtonDown = false;
+      fireButton.classList.remove('pressed');
+    }, { passive: false });
+
+    fireButton.addEventListener('touchcancel', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.fireButtonDown = false;
+      fireButton.classList.remove('pressed');
+    }, { passive: false });
   }
 
   /**
@@ -202,12 +237,6 @@ export class InputManager {
         currentY: y,
         zone
       });
-
-      // Fire when touching camera zone (center of screen)
-      if (zone === 'camera') {
-        this.fireButtonPressedThisFrame = true;
-        this.fireButtonDown = true;
-      }
     }
   }
 
@@ -241,13 +270,6 @@ export class InputManager {
 
     for (let i = 0; i < event.changedTouches.length; i++) {
       const touch = event.changedTouches[i];
-      const touchInfo = this.activeTouches.get(touch.identifier);
-
-      // Stop firing when camera zone touch ends
-      if (touchInfo && touchInfo.zone === 'camera') {
-        this.fireButtonDown = false;
-      }
-
       this.activeTouches.delete(touch.identifier);
     }
   }
@@ -378,7 +400,9 @@ export class InputManager {
 
         case 'altitude': {
           const deltaY = touchInfo.currentY - touchInfo.startY;
-          this.inputState.altitudeInput = -deltaY * this.ALTITUDE_SENSITIVITY; // Invert: drag up = go up
+          // Clamp to -1 to 1 range, with increased sensitivity
+          const rawAltitude = -deltaY * this.ALTITUDE_SENSITIVITY;
+          this.inputState.altitudeInput = Math.max(-1, Math.min(1, rawAltitude));
           break;
         }
       }
