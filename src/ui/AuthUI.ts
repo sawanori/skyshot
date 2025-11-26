@@ -5,6 +5,7 @@
  */
 
 import { AuthManager } from '../managers/AuthManager';
+import { GameManager } from '../managers/GameManager';
 
 type AuthMode = 'login' | 'signup';
 
@@ -202,6 +203,9 @@ export class AuthUI {
         this.showMessage(result.message || 'Success!', 'success');
         this.updateAuthStatus();
 
+        // Refresh player stats after login/signup
+        GameManager.getInstance().refreshPlayerStats();
+
         // Close modal after short delay if we have a session
         if (result.session) {
           setTimeout(() => {
@@ -280,6 +284,9 @@ export class AuthUI {
   private async handleLogout(): Promise<void> {
     await this.authManager.logout();
     this.updateAuthStatus();
+
+    // Hide player stats after logout
+    GameManager.getInstance().refreshPlayerStats();
 
     // Re-login anonymously
     await this.authManager.login();

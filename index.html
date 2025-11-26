@@ -961,6 +961,69 @@
       text-shadow: 0 0 5px #0f0;
     }
 
+    /* Player Stats Display */
+    .player-stats {
+      margin-bottom: 20px;
+      padding: 15px 20px;
+      background: rgba(0, 20, 40, 0.8);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      min-width: 200px;
+    }
+
+    .stats-header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: #f0f;
+      text-shadow: 0 0 8px #f0f;
+    }
+
+    .stats-icon {
+      font-size: 8px;
+      opacity: 0.8;
+    }
+
+    .stats-content {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+    }
+
+    .stat-item:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: rgba(0, 255, 255, 0.6);
+    }
+
+    .stat-value {
+      font-size: 14px;
+      font-weight: bold;
+      color: #0ff;
+      text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+      letter-spacing: 2px;
+    }
+
+    .stat-value.highlight {
+      color: #ffd700;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    }
+
     .auth-buttons {
       display: flex;
       gap: 12px;
@@ -1449,6 +1512,29 @@
       <!-- Auth Status Display -->
       <div id="auth-status" class="auth-status">
         <span id="auth-status-text">GUEST MODE</span>
+      </div>
+
+      <!-- Player Stats Display (shown when logged in) -->
+      <div id="player-stats" class="player-stats" style="display: none;">
+        <div class="stats-header">
+          <span class="stats-icon">◆</span>
+          <span>PILOT RECORD</span>
+          <span class="stats-icon">◆</span>
+        </div>
+        <div class="stats-content">
+          <div class="stat-item">
+            <span class="stat-label">HIGH SCORE</span>
+            <span class="stat-value" id="player-high-score">-----</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">TOTAL PLAYS</span>
+            <span class="stat-value" id="player-total-plays">-</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LAST PLAYED</span>
+            <span class="stat-value" id="player-last-played">--/--</span>
+          </div>
+        </div>
       </div>
 
       <button class="start-button" id="start-button">START</button>

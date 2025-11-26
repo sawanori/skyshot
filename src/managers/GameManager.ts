@@ -54,6 +54,12 @@ export class GameManager {
   private nameSubmitButton: HTMLElement | null = null;
   private leaderboardContainer: HTMLElement | null = null;
 
+  // Player Stats DOM elements
+  private playerStatsContainer: HTMLElement | null = null;
+  private playerHighScore: HTMLElement | null = null;
+  private playerTotalPlays: HTMLElement | null = null;
+  private playerLastPlayed: HTMLElement | null = null;
+
   // Auth & Leaderboard managers
   private authManager: AuthManager;
   private leaderboardManager: LeaderboardManager;
@@ -89,6 +95,12 @@ export class GameManager {
     this.nameInput = document.getElementById('name-input') as HTMLInputElement;
     this.nameSubmitButton = document.getElementById('name-submit-btn');
     this.leaderboardContainer = document.getElementById('leaderboard-container');
+
+    // Get DOM elements for Player Stats
+    this.playerStatsContainer = document.getElementById('player-stats');
+    this.playerHighScore = document.getElementById('player-high-score');
+    this.playerTotalPlays = document.getElementById('player-total-plays');
+    this.playerLastPlayed = document.getElementById('player-last-played');
 
     // Hide Score Attack UI initially (until game starts)
     if (this.scoreAttackUI) {
@@ -151,6 +163,9 @@ export class GameManager {
 
         // Update Auth UI status
         this.authUI.updateAuthStatus();
+
+        // Fetch and display player stats
+        this.refreshPlayerStats();
 
         // Optionally fetch and display initial leaderboard
         this.refreshLeaderboard();
@@ -494,5 +509,97 @@ export class GameManager {
       enemiesKilled: 0,
       timeElapsed: 0
     };
+  }
+
+  /**
+   * Fetch and display player stats on the title screen.
+   */
+  public async refreshPlayerStats(): Promise<void> {
+    // Only show stats if user is authenticated and not anonymous
+    if (!this.authManager.isAuthenticated()) {
+      this.hidePlayerStats();
+      return;
+    }
+
+    try {
+      // Fetch game history
+      const history = await this.leaderboardManager.getGameHistory(100);
+
+      if (history.length === 0) {
+        // User has no play history
+        this.hidePlayerStats();
+        return;
+      }
+
+      // Calculate stats
+      const highScore = Math.max(...history.map(h => h.score));
+      const totalPlays = history.length;
+      const lastPlayed = new Date(history[0].played_at);
+
+      // Format last played date
+      const lastPlayedStr = this.formatDate(lastPlayed);
+
+      // Update UI
+      this.showPlayerStats(highScore, totalPlays, lastPlayedStr);
+    } catch (err) {
+      console.error('[GameManager] Failed to fetch player stats:', err);
+      this.hidePlayerStats();
+    }
+  }
+
+  /**
+   * Show player stats on title screen.
+   */
+  private showPlayerStats(highScore: number, totalPlays: number, lastPlayed: string): void {
+    if (this.playerStatsContainer) {
+      this.playerStatsContainer.style.display = 'block';
+    }
+
+    if (this.playerHighScore) {
+      this.playerHighScore.textContent = highScore.toString().padStart(5, '0');
+      this.playerHighScore.classList.add('highlight');
+    }
+
+    if (this.playerTotalPlays) {
+      this.playerTotalPlays.textContent = totalPlays.toString();
+    }
+
+    if (this.playerLastPlayed) {
+      this.playerLastPlayed.textContent = lastPlayed;
+    }
+  }
+
+  /**
+   * Hide player stats on title screen.
+   */
+  private hidePlayerStats(): void {
+    if (this.playerStatsContainer) {
+      this.playerStatsContainer.style.display = 'none';
+    }
+  }
+
+  /**
+   * Format date for display.
+   */
+  private formatDate(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) {
+      return 'Just now';
+    } else if (diffMins < 60) {
+      return `${diffMins}m ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    } else if (diffDays < 7) {
+      return `${diffDays}d ago`;
+    } else {
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      return `${month}/${day}`;
+    }
   }
 }
