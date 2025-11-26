@@ -120,6 +120,164 @@ export class InputManager {
 
     // Set up fire button touch events
     this.setupFireButton();
+
+    // Set up touch zones (separate from canvas for better reliability)
+    this.setupTouchZones();
+  }
+
+  /**
+   * Set up dedicated touch zones
+   */
+  private setupTouchZones(): void {
+    this.setupJoystickZone();
+    this.setupCameraZone();
+    this.setupAltitudeZone();
+  }
+
+  /**
+   * Set up joystick zone touch events
+   */
+  private setupJoystickZone(): void {
+    const joystickZone = document.getElementById('joystick-zone');
+    if (!joystickZone) return;
+
+    joystickZone.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        this.activeTouches.set(-101, {
+          id: -101,
+          startX: touch.clientX,
+          startY: touch.clientY,
+          currentX: touch.clientX,
+          currentY: touch.clientY,
+          zone: 'joystick'
+        });
+      }
+    }, { passive: false });
+
+    joystickZone.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.touches.length > 0) {
+        const touchInfo = this.activeTouches.get(-101);
+        if (touchInfo) {
+          touchInfo.currentX = e.touches[0].clientX;
+          touchInfo.currentY = e.touches[0].clientY;
+        }
+      }
+    }, { passive: false });
+
+    joystickZone.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.activeTouches.delete(-101);
+    }, { passive: false });
+
+    joystickZone.addEventListener('touchcancel', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.activeTouches.delete(-101);
+    }, { passive: false });
+  }
+
+  /**
+   * Set up camera zone touch events
+   */
+  private setupCameraZone(): void {
+    const cameraZone = document.getElementById('camera-zone');
+    if (!cameraZone) return;
+
+    cameraZone.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        this.activeTouches.set(-102, {
+          id: -102,
+          startX: touch.clientX,
+          startY: touch.clientY,
+          currentX: touch.clientX,
+          currentY: touch.clientY,
+          zone: 'camera'
+        });
+      }
+    }, { passive: false });
+
+    cameraZone.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.touches.length > 0) {
+        const touchInfo = this.activeTouches.get(-102);
+        if (touchInfo) {
+          touchInfo.currentX = e.touches[0].clientX;
+          touchInfo.currentY = e.touches[0].clientY;
+        }
+      }
+    }, { passive: false });
+
+    cameraZone.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.activeTouches.delete(-102);
+    }, { passive: false });
+
+    cameraZone.addEventListener('touchcancel', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.activeTouches.delete(-102);
+    }, { passive: false });
+  }
+
+  /**
+   * Set up altitude zone touch events
+   */
+  private setupAltitudeZone(): void {
+    const altitudeZone = document.getElementById('altitude-zone');
+    if (!altitudeZone) return;
+
+    let startY = 0;
+
+    altitudeZone.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.touches.length > 0) {
+        startY = e.touches[0].clientY;
+        // Register as altitude touch
+        this.activeTouches.set(-100, { // Use special ID for altitude zone
+          id: -100,
+          startX: 0,
+          startY: startY,
+          currentX: 0,
+          currentY: startY,
+          zone: 'altitude'
+        });
+      }
+    }, { passive: false });
+
+    altitudeZone.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.touches.length > 0) {
+        const touchInfo = this.activeTouches.get(-100);
+        if (touchInfo) {
+          touchInfo.currentY = e.touches[0].clientY;
+        }
+      }
+    }, { passive: false });
+
+    altitudeZone.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.activeTouches.delete(-100);
+    }, { passive: false });
+
+    altitudeZone.addEventListener('touchcancel', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.activeTouches.delete(-100);
+    }, { passive: false });
   }
 
   /**
