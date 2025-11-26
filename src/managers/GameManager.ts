@@ -60,6 +60,11 @@ export class GameManager {
   private playerTotalPlays: HTMLElement | null = null;
   private playerLastPlayed: HTMLElement | null = null;
 
+  // In-game HUD High Score elements
+  private highScoreContainer: HTMLElement | null = null;
+  private highScoreDisplay: HTMLElement | null = null;
+  private cachedHighScore: number = 0;
+
   // Auth & Leaderboard managers
   private authManager: AuthManager;
   private leaderboardManager: LeaderboardManager;
@@ -101,6 +106,10 @@ export class GameManager {
     this.playerHighScore = document.getElementById('player-high-score');
     this.playerTotalPlays = document.getElementById('player-total-plays');
     this.playerLastPlayed = document.getElementById('player-last-played');
+
+    // Get DOM elements for In-game HUD High Score
+    this.highScoreContainer = document.getElementById('high-score-container');
+    this.highScoreDisplay = document.getElementById('high-score-display');
 
     // Hide Score Attack UI initially (until game starts)
     if (this.scoreAttackUI) {
@@ -219,6 +228,24 @@ export class GameManager {
       const scoreStr = this.currentScore.toString().padStart(5, '0');
       this.scoreDisplay.textContent = scoreStr;
     }
+
+    // Check if current score exceeds high score
+    if (this.cachedHighScore > 0 && this.currentScore > this.cachedHighScore) {
+      this.highlightNewHighScore();
+    }
+  }
+
+  /**
+   * Highlight the high score display when a new high score is achieved.
+   */
+  private highlightNewHighScore(): void {
+    if (this.highScoreDisplay && this.highScoreContainer) {
+      // Update the high score display to show "NEW!"
+      this.highScoreDisplay.textContent = 'NEW!';
+      this.highScoreDisplay.style.color = '#00ff00';
+      this.highScoreDisplay.style.textShadow = '0 0 10px rgba(0,255,0,0.8)';
+      this.highScoreDisplay.style.animation = 'blink 0.5s infinite';
+    }
   }
 
   private onEnemyHit(points: number): void {
@@ -238,7 +265,7 @@ export class GameManager {
     }
   }
 
-  public gameStart(): void {
+  public async gameStart(): Promise<void> {
     this.isPlaying = true;
     this.currentTime = this.TIME_LIMIT;
     this.currentScore = 0;
@@ -258,11 +285,54 @@ export class GameManager {
     this.updateScoreDisplay();
     this.updateTimerDisplay();
 
+    // Fetch and display high score for in-game HUD
+    await this.fetchAndDisplayHighScore();
+
     this.setState('playing');
 
     // Fire game:reset event
     if (this._app) {
       this._app.fire('game:reset');
+    }
+  }
+
+  /**
+   * Fetch high score and display in the in-game HUD.
+   */
+  private async fetchAndDisplayHighScore(): Promise<void> {
+    try {
+      const history = await this.leaderboardManager.getGameHistory(100);
+
+      if (history.length > 0) {
+        this.cachedHighScore = Math.max(...history.map(h => h.score));
+        this.showInGameHighScore(this.cachedHighScore);
+      } else {
+        this.hideInGameHighScore();
+      }
+    } catch (err) {
+      console.error('[GameManager] Failed to fetch high score:', err);
+      this.hideInGameHighScore();
+    }
+  }
+
+  /**
+   * Show high score in the in-game HUD.
+   */
+  private showInGameHighScore(highScore: number): void {
+    if (this.highScoreContainer) {
+      this.highScoreContainer.style.display = 'block';
+    }
+    if (this.highScoreDisplay) {
+      this.highScoreDisplay.textContent = highScore.toString().padStart(5, '0');
+    }
+  }
+
+  /**
+   * Hide high score from the in-game HUD.
+   */
+  private hideInGameHighScore(): void {
+    if (this.highScoreContainer) {
+      this.highScoreContainer.style.display = 'none';
     }
   }
 
