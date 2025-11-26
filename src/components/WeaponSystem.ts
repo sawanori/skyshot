@@ -74,7 +74,7 @@ export class WeaponSystem {
   }
 
   private loadGunSound(): void {
-    this.gunSound = new Audio('/src/assets/GunSound.mp3');
+    this.gunSound = new Audio('/assets/GunSound.mp3');
     this.gunSound.volume = 0.5;
     // Preload the audio
     this.gunSound.load();
