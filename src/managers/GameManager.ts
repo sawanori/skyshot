@@ -12,6 +12,7 @@ import * as pc from 'playcanvas';
 import { AuthManager } from './AuthManager';
 import { LeaderboardManager, LeaderboardEntry } from './LeaderboardManager';
 import { AuthUI } from '../ui/AuthUI';
+import { UserHistoryUI } from '../ui/UserHistoryUI';
 
 export type GameState = 'loading' | 'menu' | 'playing' | 'paused' | 'gameover';
 
@@ -69,12 +70,14 @@ export class GameManager {
   private authManager: AuthManager;
   private leaderboardManager: LeaderboardManager;
   private authUI: AuthUI;
+  private userHistoryUI: UserHistoryUI;
   private isAuthInitialized: boolean = false;
 
   private constructor() {
     this.authManager = AuthManager.getInstance();
     this.leaderboardManager = LeaderboardManager.getInstance();
     this.authUI = AuthUI.getInstance();
+    this.userHistoryUI = UserHistoryUI.getInstance();
   }
 
   public static getInstance(): GameManager {
@@ -153,6 +156,9 @@ export class GameManager {
 
     // Initialize Auth UI
     this.authUI.initialize();
+
+    // Initialize User History UI
+    this.userHistoryUI.initialize();
 
     // Initialize anonymous authentication
     this.initializeAuth();
