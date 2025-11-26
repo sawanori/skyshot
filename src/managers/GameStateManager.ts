@@ -225,6 +225,14 @@ export class GameStateManager {
       return;
     }
 
+    // Check if running on HTTP (not HTTPS) - gyro won't work
+    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+    if (!isSecure) {
+      if (gyroStatus) {
+        gyroStatus.textContent = 'HTTPS環境が必要です';
+      }
+    }
+
     // Handle click/touch to request permission
     const handleGyroRequest = async (e: Event) => {
       e.preventDefault();
@@ -238,6 +246,10 @@ export class GameStateManager {
         return;
       }
 
+      if (gyroStatus) {
+        gyroStatus.textContent = '許可をリクエスト中...';
+      }
+
       const granted = await inputManager.requestGyroPermission();
 
       if (granted) {
@@ -248,7 +260,12 @@ export class GameStateManager {
         }
       } else {
         if (gyroStatus) {
-          gyroStatus.textContent = '許可が必要です';
+          // More helpful error message
+          if (!isSecure) {
+            gyroStatus.textContent = 'HTTPS環境でのみ動作します';
+          } else {
+            gyroStatus.textContent = '設定からモーションを許可してください';
+          }
         }
       }
     };
