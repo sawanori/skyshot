@@ -712,6 +712,7 @@ export class InputManager {
 
   /**
    * Request gyroscope permission (required for iOS 13+)
+   * IMPORTANT: Must be called directly from user gesture (tap/click)
    */
   public async requestGyroPermission(): Promise<boolean> {
     // Check if DeviceOrientationEvent exists
@@ -721,15 +722,20 @@ export class InputManager {
     }
 
     // iOS 13+ requires permission request
-    const DeviceOrientationEvent = window.DeviceOrientationEvent as any;
-    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    const DOE = window.DeviceOrientationEvent as any;
+
+    if (typeof DOE.requestPermission === 'function') {
+      // iOS 13+ path - must request permission
       try {
-        const permission = await DeviceOrientationEvent.requestPermission();
+        console.log('Requesting iOS gyro permission...');
+        const permission = await DOE.requestPermission();
+        console.log('Permission result:', permission);
+
         if (permission === 'granted') {
           this.setupGyroscope();
           return true;
         } else {
-          console.log('Gyroscope permission denied');
+          console.log('Gyroscope permission denied:', permission);
           return false;
         }
       } catch (error) {
@@ -737,7 +743,8 @@ export class InputManager {
         return false;
       }
     } else {
-      // Non-iOS or older iOS - no permission needed
+      // Android or non-iOS - no permission needed, just enable
+      console.log('No permission needed, enabling gyro directly');
       this.setupGyroscope();
       return true;
     }

@@ -216,6 +216,23 @@ export class GameStateManager {
 
     if (!gyroButton) return;
 
+    // Detect in-app browsers (LINE, Facebook, Instagram, Twitter, etc.)
+    const ua = navigator.userAgent.toLowerCase();
+    const isInAppBrowser =
+      ua.includes('line') ||
+      ua.includes('fbav') ||
+      ua.includes('fban') ||
+      ua.includes('instagram') ||
+      ua.includes('twitter');
+
+    if (isInAppBrowser) {
+      gyroButton.setAttribute('disabled', 'true');
+      if (gyroStatus) {
+        gyroStatus.innerHTML = 'Safariで開いてください<br><small>右上メニュー → Safariで開く</small>';
+      }
+      return;
+    }
+
     // Check if gyro is available
     if (!inputManager.isGyroAvailable()) {
       gyroButton.setAttribute('disabled', 'true');
