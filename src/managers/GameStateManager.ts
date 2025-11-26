@@ -166,14 +166,27 @@ export class GameStateManager {
 
     if (resumeButton) {
       resumeButton.addEventListener('click', () => this.resumeGame());
+      resumeButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.resumeGame();
+      });
     }
 
     if (quitButton) {
       quitButton.addEventListener('click', () => this.quitToTitle());
+      quitButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.quitToTitle();
+      });
     }
 
     if (pauseButton) {
       pauseButton.addEventListener('click', () => this.pauseGame());
+      pauseButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.pauseGame();
+      });
     }
   }
 

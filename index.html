@@ -956,7 +956,7 @@
       align-items: center;
       gap: 4px;
       transition: all 0.2s;
-      z-index: 50;
+      z-index: 70;
       pointer-events: auto;
     }
 
@@ -1079,10 +1079,10 @@
     /* Altitude slider zone (right edge) */
     #altitude-zone {
       position: absolute;
-      top: 0;
+      top: 60px; /* Leave space for pause button */
       right: 0;
       width: 15%;
-      height: 100%;
+      height: calc(100% - 60px);
       pointer-events: auto;
       z-index: 55;
       /* Debug: uncomment to see zone */
@@ -1092,10 +1092,10 @@
     /* Camera control zone (remaining right area) */
     #camera-zone {
       position: absolute;
-      top: 0;
+      top: 60px; /* Leave space for pause button */
       right: 15%;
       width: 45%;
-      height: 100%;
+      height: calc(100% - 60px);
       pointer-events: auto;
       z-index: 55;
     }
