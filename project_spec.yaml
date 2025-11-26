@@ -1,0 +1,186 @@
+project_metadata:
+  name: "vertical-retro-shooter-web"
+  description: "Web-based 3D 360-degree shooting game optimized for mobile portrait mode."
+  target_platform: "Mobile Web (Vertical 9:16) / PC (Containerized Emulation)"
+  tech_stack:
+    engine: "PlayCanvas (Engine-only or Script-based)"
+    language: "TypeScript (Strict Mode)"
+    bundler: "Vite or esbuild"
+    hosting: "Vercel"
+    style: "Retro-Cyber (PS1 Low-poly style + Glitch/Neon Effects)"
+
+# ==========================================
+# 1. ディレクトリ構造とファイル構成
+# ==========================================
+directory_structure:
+  root:
+    - package.json
+    - tsconfig.json
+    - vercel.json
+    - vite.config.ts (or equivalent build config)
+    - index.html (App Shell for Mobile/PC container)
+    - src:
+      - main.ts (Entry point)
+      - assets: (Images, Models)
+      - components:
+        - PlayerController.ts
+        - WeaponSystem.ts
+        - EnemyAI.ts
+      - managers:
+        - GameManager.ts
+        - InputManager.ts (Touch/Mouse normalization)
+        - UIManager.ts
+      - ui:
+        - VirtualJoystick.ts
+        - RadarSystem.ts
+        - VerticalSlider.ts
+      - utils:
+        - MathHelpers.ts
+      - shaders:
+        - retro_grid.frag
+        - glitch.post.js
+
+# ==========================================
+# 2. 設定ファイル詳細 (そのまま作成させる)
+# ==========================================
+configurations:
+  package_json:
+    dependencies:
+      playcanvas: "^1.66.0"
+    devDependencies:
+      typescript: "^5.0.0"
+      vite: "^5.0.0"
+      "@types/node": "^20.0.0"
+    scripts:
+      dev: "vite"
+      build: "tsc && vite build"
+      preview: "vite preview"
+
+  tsconfig_json: |
+    {
+      "compilerOptions": {
+        "target": "ESNext",
+        "useDefineForClassFields": true,
+        "module": "ESNext",
+        "lib": ["ESNext", "DOM"],
+        "moduleResolution": "Node",
+        "strict": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "esModuleInterop": true,
+        "noEmit": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "skipLibCheck": true
+      },
+      "include": ["src"]
+    }
+
+  vercel_json: |
+    {
+      "framework": "vite",
+      "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+      "headers": [
+        {
+          "source": "/assets/(.*)",
+          "headers": [
+            { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+          ]
+        }
+      ]
+    }
+
+# ==========================================
+# 3. ゲームプレイ仕様と実装ロジック
+# ==========================================
+gameplay_specs:
+  controls:
+    input_strategy: "Multi-touch handling"
+    left_hand: "Virtual Joystick (Move X/Z plane)"
+    right_hand_drag: "Camera Rotation (Yaw/Pitch)"
+    right_hand_slider: "Vertical Movement (Ascend/Descend)"
+    shooting: "Auto-fire when enemy is in reticle range"
+
+  visual_style:
+    camera: "TPS (Third Person) with slight lag for weight feeling"
+    environment: "Neon grid floor, Low-poly skyscrapers (fog hidden base)"
+    post_processing: "Bloom (Neon glow), Scanlines, RGB Shift (Glitch)"
+
+# ==========================================
+# 4. コアクラス実装指示 (具体的なコード構造)
+# ==========================================
+implementation_instructions:
+  
+  # A. InputManager: スマホとPCの操作を正規化する
+  InputManager.ts: |
+    Implement a Singleton class 'InputManager'.
+    - Detect 'touch' vs 'mouse' automatically.
+    - Expose public properties:
+      - moveVector: Vec2 (Range -1 to 1) // For movement
+      - lookDelta: Vec2  // For camera rotation
+      - altitudeInput: number // Range -1 (Down) to 1 (Up)
+    - Logic for Altitude Slider:
+      - Create a transparent UI zone on the right edge (width: 15% of screen).
+      - If touch starts in this zone, treat vertical delta as 'altitudeInput'.
+      - If touch starts outside, treat as 'lookDelta'.
+
+  # B. PlayerController: 3次元移動ロジック
+  PlayerController.ts: |
+    Extend pc.ScriptType.
+    Properties: speed (number), ascendSpeed (number), lookSensitivity (number).
+    
+    Update Loop (dt):
+      1. Get inputs from InputManager.
+      2. Movement (Planar):
+         const forward = this.entity.forward.clone();
+         forward.y = 0; forward.normalize();
+         const right = this.entity.right.clone();
+         right.y = 0; right.normalize();
+         const moveDir = forward.scale(input.moveVector.y).add(right.scale(input.moveVector.x));
+         this.entity.translate(moveDir.scale(this.speed * dt));
+      
+      3. Rotation (Yaw):
+         this.entity.rotate(0, input.lookDelta.x * this.lookSensitivity * -1, 0);
+      
+      4. Vertical Movement:
+         this.entity.translate(0, input.altitudeInput * this.ascendSpeed * dt, 0);
+         // Clamp Y position to min/max height (e.g., 0 to 50 units).
+
+  # C. RadarSystem: 360度レーダーUI
+  RadarSystem.ts: |
+    - Target: All entities tagged 'Enemy'.
+    - UI: Create a 2D circle element in the HUD center-bottom.
+    - Logic:
+      Iterate all enemies.
+      Calculate relative position to player (ignore Y axis).
+      Convert to polar coordinates (angle, distance).
+      Map to UI coordinates within the radar circle.
+      Update dots (red sprites) on the radar.
+      Clamping: If enemy is outside radar range, hide dot or clamp to edge.
+
+  # D. HTML Structure (App Shell)
+  index_html: |
+    - Body background: Dark gray / Black pattern.
+    - Container Div (#game-container):
+      - CSS: 
+        - Max-width: 450px (Mobile size)
+        - Height: 100vh (or Aspect Ratio 9:16 on Desktop)
+        - Margin: 0 auto
+        - Box-shadow: Neon glow effect for PC view.
+    - Canvas: Inside #game-container, w=100%, h=100%.
+    - Overlay (Desktop only):
+      - Show QR Code on the side.
+      - Show controls explanation.
+
+# ==========================================
+# 5. 開発・デプロイ手順 (AIへの実行指示)
+# ==========================================
+execution_steps:
+  1. "Initialize the project structure with the specified package.json and tsconfig.json."
+  2. "Install dependencies using npm or yarn."
+  3. "Create the basic boilerplate for PlayCanvas Engine in 'src/main.ts' to render a simple cube."
+  4. "Implement the 'InputManager.ts' first to handle touch/mouse logic."
+  5. "Implement 'PlayerController.ts' and attach it to the camera/player entity."
+  6. "Set up the 'index.html' with the CSS for the mobile emulation container."
+  7. "Provide the build command to generate the 'dist' folder for Vercel."

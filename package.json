@@ -1,0 +1,22 @@
+{
+  "name": "vertical-retro-shooter-web",
+  "version": "1.0.0",
+  "description": "Web-based 3D 360-degree shooting game optimized for mobile portrait mode",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "playcanvas": "^1.66.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^20.0.0",
+    "playwright": "^1.57.0",
+    "terser": "^5.44.1",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
+  }
+}

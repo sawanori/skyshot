@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>空酔いシューティング</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0a0a0a;
+      background-image:
+        radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0a 100%);
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Main container - Mobile emulation on desktop */
+    #game-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      max-width: 450px;
+      margin: 0 auto;
+      background: #000;
+      overflow: hidden;
+    }
+
+    /* Desktop-only: Neon glow effect and centered layout */
+    @media (min-width: 768px) {
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #game-container {
+        height: 100vh;
+        max-height: calc(100vw * 16 / 9);
+        aspect-ratio: 9 / 16;
+        box-shadow:
+          0 0 20px rgba(0, 255, 255, 0.3),
+          0 0 40px rgba(255, 0, 255, 0.2),
+          0 0 60px rgba(0, 255, 255, 0.1),
+          inset 0 0 20px rgba(0, 255, 255, 0.05);
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        border-radius: 8px;
+      }
+
+      /* Desktop overlay panels */
+      #desktop-overlay-left,
+      #desktop-overlay-right {
+        position: fixed;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #0ff;
+        padding: 20px;
+        text-align: center;
+        font-size: 14px;
+        opacity: 0.8;
+      }
+
+      #desktop-overlay-left {
+        left: 20px;
+      }
+
+      #desktop-overlay-right {
+        right: 20px;
+      }
+
+      .controls-info {
+        margin-top: 20px;
+        text-align: left;
+        line-height: 1.8;
+      }
+
+      .controls-info h3 {
+        color: #f0f;
+        margin-bottom: 10px;
+        text-shadow: 0 0 10px #f0f;
+      }
+
+      .qr-placeholder {
+        width: 120px;
+        height: 120px;
+        border: 2px dashed rgba(0, 255, 255, 0.5);
+        margin: 20px auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+      }
+    }
+
+    /* Canvas fills the container */
+    #game-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    /* Loading overlay */
+    #loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #0ff;
+      z-index: 100;
+      transition: opacity 0.5s;
+    }
+
+    #loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-title {
+      font-size: 24px;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      text-shadow: 0 0 20px #0ff;
+      animation: flicker 2s infinite;
+    }
+
+    .loading-bar {
+      width: 200px;
+      height: 4px;
+      background: rgba(0, 255, 255, 0.2);
+      margin-top: 20px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .loading-progress {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #0ff, #f0f);
+      transition: width 0.3s;
+    }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+      92% { opacity: 1; }
+      94% { opacity: 0.3; }
+      96% { opacity: 1; }
+    }
+
+    /* HUD elements placeholder */
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* ========== COCKPIT HUD STYLES ========== */
+
+    /* Cockpit frame/bezel */
+    .cockpit-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background:
+        /* Top bezel */
+        linear-gradient(180deg, rgba(10,10,20,0.9) 0%, transparent 8%),
+        /* Bottom bezel */
+        linear-gradient(0deg, rgba(10,10,20,0.95) 0%, transparent 15%),
+        /* Left bezel */
+        linear-gradient(90deg, rgba(10,10,20,0.7) 0%, transparent 5%),
+        /* Right bezel */
+        linear-gradient(270deg, rgba(10,10,20,0.7) 0%, transparent 5%),
+        /* Corner vignette */
+        radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%);
+      border: 3px solid rgba(0,255,255,0.2);
+      box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+    }
+
+    .cockpit-frame::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: linear-gradient(180deg, rgba(0,20,30,0.9) 0%, transparent 100%);
+      border-bottom: 1px solid rgba(0,255,255,0.3);
+    }
+
+    .cockpit-frame::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 120px;
+      background: linear-gradient(0deg, rgba(0,20,30,0.95) 0%, transparent 100%);
+      border-top: 1px solid rgba(0,255,255,0.3);
+    }
+
+    /* Top HUD bar */
+    .hud-top-bar {
+      position: absolute;
+      top: 5px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      font-size: 10px;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+    }
+
+    .hud-status {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .hud-status-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .hud-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #0f0;
+      box-shadow: 0 0 5px #0f0;
+      animation: pulse 2s infinite;
+    }
+
+    .hud-indicator.warning {
+      background: #ff0;
+      box-shadow: 0 0 5px #ff0;
+      animation: blink 0.5s infinite;
+    }
+
+    .hud-indicator.danger {
+      background: #f00;
+      box-shadow: 0 0 5px #f00;
+      animation: blink 0.3s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Altitude indicator (right side) */
+    .altitude-display {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 200px;
+      border: 1px solid rgba(0,255,255,0.4);
+      background: rgba(0,20,30,0.6);
+    }
+
+    .altitude-scale {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .altitude-marker {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: rgba(0,255,255,0.3);
+    }
+
+    .altitude-pointer {
+      position: absolute;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+      border-right: 12px solid #0ff;
+      filter: drop-shadow(0 0 3px #0ff);
+      transition: top 0.1s ease-out;
+    }
+
+    .altitude-value {
+      position: absolute;
+      right: 45px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+      background: rgba(0,20,30,0.8);
+      padding: 2px 5px;
+      border: 1px solid rgba(0,255,255,0.5);
+    }
+
+    /* Speed indicator (left side) */
+    .speed-display {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 200px;
+      border: 1px solid rgba(0,255,255,0.4);
+      background: rgba(0,20,30,0.6);
+    }
+
+    .speed-pointer {
+      position: absolute;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+      border-left: 12px solid #0ff;
+      filter: drop-shadow(0 0 3px #0ff);
+      transition: top 0.1s ease-out;
+    }
+
+    .speed-value {
+      position: absolute;
+      left: 45px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+      background: rgba(0,20,30,0.8);
+      padding: 2px 5px;
+      border: 1px solid rgba(0,255,255,0.5);
+    }
+
+    /* Attitude indicator (artificial horizon) */
+    .attitude-indicator {
+      position: absolute;
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 40px;
+      border: 1px solid rgba(0,255,255,0.5);
+      border-radius: 5px;
+      overflow: hidden;
+      background: linear-gradient(180deg,
+        rgba(80,150,255,0.4) 0%,
+        rgba(80,150,255,0.4) 50%,
+        rgba(80,60,20,0.4) 50%,
+        rgba(80,60,20,0.4) 100%
+      );
+    }
+
+    .attitude-horizon {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: #0ff;
+      box-shadow: 0 0 5px #0ff;
+      transform-origin: center;
+      transition: transform 0.1s ease-out;
+    }
+
+    .attitude-wings {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 4px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .attitude-wings::before,
+    .attitude-wings::after {
+      content: '';
+      width: 15px;
+      height: 2px;
+      background: #f80;
+      box-shadow: 0 0 3px #f80;
+    }
+
+    .attitude-wings::before {
+      margin-right: 10px;
+    }
+
+    .attitude-wings::after {
+      margin-left: 10px;
+    }
+
+    /* Radar display */
+    .radar-display {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      width: 80px;
+      height: 80px;
+      border: 1px solid rgba(0,255,255,0.5);
+      border-radius: 50%;
+      background: rgba(0,20,30,0.7);
+      overflow: hidden;
+    }
+
+    .radar-sweep {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 50%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, #0f0 100%);
+      transform-origin: left center;
+      animation: radar-rotate 2s linear infinite;
+    }
+
+    @keyframes radar-rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .radar-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .radar-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(0,255,255,0.2);
+      border-radius: 50%;
+    }
+
+    .radar-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 6px;
+      height: 6px;
+      background: #0ff;
+      border-radius: 50%;
+      box-shadow: 0 0 5px #0ff;
+    }
+
+    .radar-blip {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: #f00;
+      border-radius: 50%;
+      box-shadow: 0 0 5px #f00;
+      animation: blip-fade 1s ease-out infinite;
+    }
+
+    @keyframes blip-fade {
+      0% { opacity: 1; }
+      100% { opacity: 0.3; }
+    }
+
+    /* Weapon status display */
+    .weapon-display {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      text-align: right;
+      font-size: 10px;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+    }
+
+    .weapon-name {
+      font-size: 12px;
+      color: #f80;
+      text-shadow: 0 0 5px #f80;
+      margin-bottom: 3px;
+    }
+
+    .ammo-bar {
+      width: 60px;
+      height: 6px;
+      background: rgba(0,255,255,0.2);
+      border: 1px solid rgba(0,255,255,0.4);
+      margin-top: 3px;
+    }
+
+    .ammo-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0ff, #0f0);
+      transition: width 0.2s;
+    }
+
+    /* Bottom center data display */
+    .data-display {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      font-size: 10px;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+    }
+
+    .data-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .data-label {
+      font-size: 8px;
+      opacity: 0.7;
+    }
+
+    .data-value {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    /* Enhanced crosshair */
+    .targeting-reticle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      pointer-events: none;
+    }
+
+    .reticle-outer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 1px solid rgba(0,255,255,0.4);
+      border-radius: 50%;
+      animation: reticle-rotate 10s linear infinite;
+    }
+
+    @keyframes reticle-rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .reticle-inner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 30px;
+      height: 30px;
+      border: 1px solid rgba(0,255,255,0.6);
+    }
+
+    .reticle-cross-h {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        #0ff 20%,
+        transparent 40%,
+        transparent 60%,
+        #0ff 80%,
+        transparent 100%
+      );
+      box-shadow: 0 0 5px #0ff;
+    }
+
+    .reticle-cross-v {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 1px;
+      height: 100%;
+      background: linear-gradient(180deg,
+        transparent 0%,
+        #0ff 20%,
+        transparent 40%,
+        transparent 60%,
+        #0ff 80%,
+        transparent 100%
+      );
+      box-shadow: 0 0 5px #0ff;
+    }
+
+    .reticle-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 4px;
+      height: 4px;
+      background: #f00;
+      border-radius: 50%;
+      box-shadow: 0 0 5px #f00;
+    }
+
+    .reticle-brackets {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+    }
+
+    .bracket {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-color: #0ff;
+      border-style: solid;
+    }
+
+    .bracket-tl { top: 0; left: 0; border-width: 1px 0 0 1px; }
+    .bracket-tr { top: 0; right: 0; border-width: 1px 1px 0 0; }
+    .bracket-bl { bottom: 0; left: 0; border-width: 0 0 1px 1px; }
+    .bracket-br { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+
+    /* Warning messages */
+    .warning-display {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: #f00;
+      text-shadow: 0 0 10px #f00;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .warning-display.active {
+      opacity: 1;
+      animation: warning-flash 0.5s infinite;
+    }
+
+    @keyframes warning-flash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Scanlines effect */
+    .scanlines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.1) 0px,
+        rgba(0,0,0,0.1) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+      opacity: 0.3;
+    }
+
+    /* ========== TITLE SCREEN STYLES ========== */
+    #title-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg,
+        rgba(0, 10, 20, 0.98) 0%,
+        rgba(0, 30, 60, 0.95) 50%,
+        rgba(0, 10, 20, 0.98) 100%
+      );
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+      transition: opacity 0.5s, visibility 0.5s;
+    }
+
+    #title-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .title-container {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .game-title {
+      font-size: 32px;
+      font-weight: bold;
+      color: #0ff;
+      text-transform: uppercase;
+      letter-spacing: 6px;
+      text-shadow:
+        0 0 10px #0ff,
+        0 0 20px #0ff,
+        0 0 40px #0ff,
+        0 0 80px #08f;
+      animation: title-glow 2s ease-in-out infinite;
+      margin-bottom: 10px;
+    }
+
+    .game-subtitle {
+      font-size: 14px;
+      color: #f0f;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      text-shadow: 0 0 10px #f0f;
+      opacity: 0.8;
+    }
+
+    @keyframes title-glow {
+      0%, 100% {
+        text-shadow:
+          0 0 10px #0ff,
+          0 0 20px #0ff,
+          0 0 40px #0ff,
+          0 0 80px #08f;
+      }
+      50% {
+        text-shadow:
+          0 0 20px #0ff,
+          0 0 40px #0ff,
+          0 0 60px #0ff,
+          0 0 100px #08f;
+      }
+    }
+
+    .start-button {
+      position: relative;
+      padding: 15px 50px;
+      font-family: 'Courier New', monospace;
+      font-size: 18px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      color: #0f0;
+      background: transparent;
+      border: 2px solid #0f0;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.3s;
+      text-shadow: 0 0 10px #0f0;
+      box-shadow:
+        0 0 10px rgba(0, 255, 0, 0.3),
+        inset 0 0 10px rgba(0, 255, 0, 0.1);
+    }
+
+    .start-button:hover {
+      color: #fff;
+      background: rgba(0, 255, 0, 0.2);
+      box-shadow:
+        0 0 20px rgba(0, 255, 0, 0.5),
+        0 0 40px rgba(0, 255, 0, 0.3),
+        inset 0 0 20px rgba(0, 255, 0, 0.2);
+      transform: scale(1.05);
+    }
+
+    .start-button:active {
+      transform: scale(0.98);
+    }
+
+    .start-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.3), transparent);
+      animation: button-shine 3s infinite;
+    }
+
+    @keyframes button-shine {
+      0% { left: -100%; }
+      50%, 100% { left: 100%; }
+    }
+
+    .title-decorations {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .title-line {
+      position: absolute;
+      background: linear-gradient(90deg, transparent, #0ff, transparent);
+      height: 1px;
+      width: 100%;
+      opacity: 0.3;
+    }
+
+    .title-line:nth-child(1) { top: 20%; animation: line-move 8s linear infinite; }
+    .title-line:nth-child(2) { top: 40%; animation: line-move 6s linear infinite reverse; }
+    .title-line:nth-child(3) { top: 60%; animation: line-move 10s linear infinite; }
+    .title-line:nth-child(4) { top: 80%; animation: line-move 7s linear infinite reverse; }
+
+    @keyframes line-move {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .corner-decoration {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-color: #0ff;
+      border-style: solid;
+      opacity: 0.5;
+    }
+
+    .corner-tl { top: 20px; left: 20px; border-width: 2px 0 0 2px; }
+    .corner-tr { top: 20px; right: 20px; border-width: 2px 2px 0 0; }
+    .corner-bl { bottom: 20px; left: 20px; border-width: 0 0 2px 2px; }
+    .corner-br { bottom: 20px; right: 20px; border-width: 0 2px 2px 0; }
+
+    .controls-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      color: #0ff;
+      font-size: 10px;
+      opacity: 0.6;
+      letter-spacing: 1px;
+    }
+
+    .controls-hint p {
+      margin: 5px 0;
+    }
+
+    /* ========== PAUSE MENU STYLES ========== */
+    #pause-button {
+      position: absolute;
+      top: 10px;
+      right: 55px;
+      width: 36px;
+      height: 36px;
+      background: rgba(0, 20, 30, 0.7);
+      border: 1px solid rgba(0, 255, 255, 0.5);
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+      z-index: 50;
+      pointer-events: auto;
+    }
+
+    #pause-button:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+
+    #pause-button .pause-bar {
+      width: 4px;
+      height: 16px;
+      background: #0ff;
+      box-shadow: 0 0 5px #0ff;
+    }
+
+    #pause-menu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 10, 20, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 150;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    #pause-menu.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .pause-title {
+      font-size: 28px;
+      color: #0ff;
+      text-transform: uppercase;
+      letter-spacing: 8px;
+      text-shadow: 0 0 20px #0ff;
+      margin-bottom: 50px;
+    }
+
+    .pause-menu-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .pause-menu-btn {
+      padding: 12px 40px;
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: #0ff;
+      background: transparent;
+      border: 2px solid #0ff;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-shadow: 0 0 5px #0ff;
+    }
+
+    .pause-menu-btn:hover {
+      color: #fff;
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+      transform: scale(1.05);
+    }
+
+    .pause-menu-btn.resume {
+      color: #0f0;
+      border-color: #0f0;
+      text-shadow: 0 0 5px #0f0;
+    }
+
+    .pause-menu-btn.resume:hover {
+      background: rgba(0, 255, 0, 0.2);
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    }
+
+    .pause-menu-btn.quit {
+      color: #f55;
+      border-color: #f55;
+      text-shadow: 0 0 5px #f55;
+    }
+
+    .pause-menu-btn.quit:hover {
+      background: rgba(255, 85, 85, 0.2);
+      box-shadow: 0 0 20px rgba(255, 85, 85, 0.5);
+    }
+
+    .pause-stats {
+      margin-top: 40px;
+      text-align: center;
+      color: #0ff;
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .pause-stats p {
+      margin: 5px 0;
+    }
+
+    /* Virtual joystick area (left side) */
+    #joystick-zone {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 40%;
+      height: 40%;
+      pointer-events: auto;
+    }
+
+    /* Altitude slider zone (right edge) */
+    #altitude-zone {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 15%;
+      height: 100%;
+      pointer-events: auto;
+    }
+
+    /* Camera control zone (remaining right area) */
+    #camera-zone {
+      position: absolute;
+      top: 0;
+      right: 15%;
+      width: 45%;
+      height: 100%;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Title Screen -->
+    <div id="title-screen">
+      <div class="title-decorations">
+        <div class="title-line"></div>
+        <div class="title-line"></div>
+        <div class="title-line"></div>
+        <div class="title-line"></div>
+        <div class="corner-decoration corner-tl"></div>
+        <div class="corner-decoration corner-tr"></div>
+        <div class="corner-decoration corner-bl"></div>
+        <div class="corner-decoration corner-br"></div>
+      </div>
+
+      <div class="title-container">
+        <h1 class="game-title">空酔いシューティング</h1>
+        <p class="game-subtitle">３D酔いにご注意下さい</p>
+      </div>
+
+      <button class="start-button" id="start-button">START</button>
+
+      <div class="controls-hint">
+        <p>WASD - MOVE | MOUSE - AIM</p>
+        <p>SPACE/SHIFT - ALTITUDE | F/CLICK - FIRE</p>
+      </div>
+    </div>
+
+    <!-- Pause Menu -->
+    <div id="pause-menu">
+      <h2 class="pause-title">Paused</h2>
+      <div class="pause-menu-buttons">
+        <button class="pause-menu-btn resume" id="resume-button">Resume</button>
+        <button class="pause-menu-btn quit" id="quit-button">Quit</button>
+      </div>
+      <div class="pause-stats">
+        <p>TIME: <span id="pause-time">00:00</span></p>
+        <p>TARGETS: <span id="pause-targets">0</span></p>
+      </div>
+    </div>
+
+    <!-- HUD overlay -->
+    <div id="hud">
+      <!-- Pause button -->
+      <button id="pause-button">
+        <div class="pause-bar"></div>
+        <div class="pause-bar"></div>
+      </button>
+
+      <!-- Cockpit frame -->
+      <div class="cockpit-frame"></div>
+
+      <!-- Scanlines effect -->
+      <div class="scanlines"></div>
+
+      <!-- Top status bar -->
+      <div class="hud-top-bar">
+        <div class="hud-status">
+          <div class="hud-status-item">
+            <span class="hud-indicator"></span>
+            <span>SYS OK</span>
+          </div>
+          <div class="hud-status-item">
+            <span class="hud-indicator"></span>
+            <span>WPN RDY</span>
+          </div>
+        </div>
+        <div class="hud-status" style="text-align: right;">
+          <div class="hud-status-item">
+            <span>FPS: <span id="fps-display">60</span></span>
+          </div>
+          <div class="hud-status-item">
+            <span id="time-display">00:00:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attitude indicator (artificial horizon) -->
+      <div class="attitude-indicator">
+        <div class="attitude-horizon" id="attitude-horizon"></div>
+        <div class="attitude-wings"></div>
+      </div>
+
+      <!-- Warning display -->
+      <div class="warning-display" id="warning-display">WARNING</div>
+
+      <!-- Altitude indicator (right) -->
+      <div class="altitude-display">
+        <div class="altitude-scale">
+          <div class="altitude-marker" style="top: 0%;"></div>
+          <div class="altitude-marker" style="top: 25%;"></div>
+          <div class="altitude-marker" style="top: 50%;"></div>
+          <div class="altitude-marker" style="top: 75%;"></div>
+          <div class="altitude-marker" style="top: 100%;"></div>
+        </div>
+        <div class="altitude-pointer" id="altitude-pointer" style="top: 50%;"></div>
+      </div>
+      <div class="altitude-value" id="altitude-value">ALT 5</div>
+
+      <!-- Speed indicator (left) -->
+      <div class="speed-display">
+        <div class="altitude-scale">
+          <div class="altitude-marker" style="top: 0%;"></div>
+          <div class="altitude-marker" style="top: 25%;"></div>
+          <div class="altitude-marker" style="top: 50%;"></div>
+          <div class="altitude-marker" style="top: 75%;"></div>
+          <div class="altitude-marker" style="top: 100%;"></div>
+        </div>
+        <div class="speed-pointer" id="speed-pointer" style="top: 50%;"></div>
+      </div>
+      <div class="speed-value" id="speed-value">SPD 0</div>
+
+      <!-- Enhanced targeting reticle -->
+      <div class="targeting-reticle">
+        <div class="reticle-outer"></div>
+        <div class="reticle-inner"></div>
+        <div class="reticle-cross-h"></div>
+        <div class="reticle-cross-v"></div>
+        <div class="reticle-dot"></div>
+        <div class="reticle-brackets">
+          <div class="bracket bracket-tl"></div>
+          <div class="bracket bracket-tr"></div>
+          <div class="bracket bracket-bl"></div>
+          <div class="bracket bracket-br"></div>
+        </div>
+      </div>
+
+      <!-- Radar display -->
+      <div class="radar-display">
+        <div class="radar-grid">
+          <div class="radar-ring" style="width: 25%; height: 25%;"></div>
+          <div class="radar-ring" style="width: 50%; height: 50%;"></div>
+          <div class="radar-ring" style="width: 75%; height: 75%;"></div>
+        </div>
+        <div class="radar-sweep"></div>
+        <div class="radar-center"></div>
+        <div id="radar-blips"></div>
+      </div>
+
+      <!-- Weapon display -->
+      <div class="weapon-display">
+        <div class="weapon-name">LASER CANNON</div>
+        <div>ENERGY</div>
+        <div class="ammo-bar">
+          <div class="ammo-fill" id="ammo-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- Bottom center data -->
+      <div class="data-display">
+        <div class="data-item">
+          <span class="data-label">HDG</span>
+          <span class="data-value" id="heading-value">000°</span>
+        </div>
+        <div class="data-item">
+          <span class="data-label">PITCH</span>
+          <span class="data-value" id="pitch-value">0°</span>
+        </div>
+        <div class="data-item">
+          <span class="data-label">TGT</span>
+          <span class="data-value" id="target-count">8</span>
+        </div>
+      </div>
+
+      <!-- Touch control zones (must be on top for touch events) -->
+      <div id="joystick-zone"></div>
+      <div id="camera-zone"></div>
+      <div id="altitude-zone"></div>
+    </div>
+
+    <!-- Loading screen -->
+    <div id="loading-overlay">
+      <div class="loading-title">Loading...</div>
+      <div class="loading-bar">
+        <div class="loading-progress" id="loading-progress"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desktop overlays (hidden on mobile) -->
+  <div id="desktop-overlay-left">
+    <div class="qr-placeholder">QR Code</div>
+    <p>Scan to play on mobile</p>
+  </div>
+
+  <div id="desktop-overlay-right">
+    <div class="controls-info">
+      <h3>// CONTROLS</h3>
+      <p>LEFT DRAG: Move</p>
+      <p>RIGHT DRAG: Look</p>
+      <p>RIGHT EDGE: Altitude</p>
+      <p>AUTO-FIRE: When aimed</p>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
