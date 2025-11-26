@@ -8,13 +8,19 @@ export default defineConfig({
     sourcemap: true,
     minify: 'terser',
     rollupOptions: {
-      input: 'index.html'
+      input: 'index.html',
+      output: {
+        // Ensure content-hashed filenames for cache busting
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
     }
   },
   server: {
     port: 3000,
     open: true,
-    host: true, // Allow external access
-    https: true // Enable HTTPS with self-signed certificate
+    host: true,
+    https: true
   }
 });
