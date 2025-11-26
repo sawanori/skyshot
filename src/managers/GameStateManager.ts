@@ -8,6 +8,7 @@
  */
 
 import * as pc from 'playcanvas';
+import { InputManager } from './InputManager';
 
 export enum GameState {
   Title = 'title',
@@ -36,6 +37,7 @@ export class GameStateManager {
     this.setupTitleScreen();
     this.setupPauseMenu();
     this.setupKeyboardShortcuts();
+    this.setupGyroButton();
   }
 
   public get state(): GameState {
@@ -192,5 +194,53 @@ export class GameStateManager {
 
   private exitPointerLock(): void {
     document.exitPointerLock?.();
+  }
+
+  private setupGyroButton(): void {
+    const gyroButton = document.getElementById('gyro-button');
+    const gyroStatus = document.getElementById('gyro-status');
+    const inputManager = InputManager.getInstance();
+
+    if (!gyroButton) return;
+
+    // Check if gyro is available
+    if (!inputManager.isGyroAvailable()) {
+      gyroButton.setAttribute('disabled', 'true');
+      if (gyroStatus) {
+        gyroStatus.textContent = 'ジャイロセンサー非対応';
+      }
+      return;
+    }
+
+    // Handle click/touch to request permission
+    const handleGyroRequest = async (e: Event) => {
+      e.preventDefault();
+
+      if (inputManager.isGyroEnabled()) {
+        // Already enabled - recalibrate
+        inputManager.recalibrateGyro();
+        if (gyroStatus) {
+          gyroStatus.textContent = 'キャリブレーション完了';
+        }
+        return;
+      }
+
+      const granted = await inputManager.requestGyroPermission();
+
+      if (granted) {
+        gyroButton.classList.add('enabled');
+        gyroButton.innerHTML = '<span class="gyro-icon">✓</span><span>ジャイロON</span>';
+        if (gyroStatus) {
+          gyroStatus.textContent = 'ジャイロセンサー有効';
+        }
+      } else {
+        if (gyroStatus) {
+          gyroStatus.textContent = '許可が必要です';
+        }
+      }
+    };
+
+    gyroButton.addEventListener('click', handleGyroRequest);
+    gyroButton.addEventListener('touchstart', handleGyroRequest, { passive: false });
   }
 }

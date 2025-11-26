@@ -889,6 +889,57 @@
       margin: 5px 0;
     }
 
+    /* Gyro button */
+    .gyro-button {
+      margin-top: 20px;
+      padding: 10px 30px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      color: #f0f;
+      background: transparent;
+      border: 2px solid #f0f;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-shadow: 0 0 10px #f0f;
+      box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .gyro-button:hover {
+      background: rgba(255, 0, 255, 0.2);
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+    }
+
+    .gyro-button.enabled {
+      color: #0f0;
+      border-color: #0f0;
+      text-shadow: 0 0 10px #0f0;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+
+    .gyro-button.enabled:hover {
+      background: rgba(0, 255, 0, 0.2);
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    }
+
+    .gyro-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .gyro-icon {
+      font-size: 18px;
+    }
+
+    .gyro-status {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #0ff;
+      opacity: 0.7;
+    }
+
     /* ========== PAUSE MENU STYLES ========== */
     #pause-button {
       position: absolute;
@@ -1123,6 +1174,13 @@
       </div>
 
       <button class="start-button" id="start-button">START</button>
+
+      <!-- Gyro enable button (for iOS permission) -->
+      <button class="gyro-button" id="gyro-button">
+        <span class="gyro-icon">📱</span>
+        <span>ジャイロON</span>
+      </button>
+      <p class="gyro-status" id="gyro-status"></p>
 
       <div class="controls-hint">
         <p>WASD - MOVE | MOUSE - AIM</p>

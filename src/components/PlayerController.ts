@@ -107,11 +107,22 @@ export class PlayerController {
   public update(dt: number): void {
     const input = this.inputManager.getInputState();
 
-    // Update rotation (yaw, pitch)
-    this.updateRotation(input.lookDelta, dt);
+    // Update rotation based on gyro or touch/mouse
+    if (input.gyroActive) {
+      // Use gyroscope for camera orientation
+      this.updateGyroRotation(input);
+    } else {
+      // Use touch/mouse delta for camera rotation
+      this.updateRotation(input.lookDelta, dt);
+    }
 
-    // Update roll (Z/C keys for barrel roll)
-    this.updateRoll(input.rollInput, dt);
+    // Update roll (Z/C keys for barrel roll, or gyro roll)
+    if (input.gyroActive) {
+      // Slight roll from phone tilt
+      this.roll = input.gyroRoll;
+    } else {
+      this.updateRoll(input.rollInput, dt);
+    }
 
     // Update position
     this.updatePosition(input.moveVector, input.altitudeInput, dt);
@@ -127,6 +138,23 @@ export class PlayerController {
 
     // Apply final transform
     this.applyTransform();
+  }
+
+  /**
+   * Update camera rotation based on gyroscope
+   */
+  private updateGyroRotation(input: import('../managers/InputManager').InputState): void {
+    // Gyro provides absolute orientation relative to initial position
+    // Smooth transition to gyro values
+    const smoothFactor = 0.15;
+
+    // Target yaw and pitch from gyro
+    const targetYaw = input.gyroYaw;
+    const targetPitch = pc.math.clamp(input.gyroPitch, this.config.minPitch, this.config.maxPitch);
+
+    // Smooth interpolation
+    this.yaw = this.yaw + (targetYaw - this.yaw) * smoothFactor;
+    this.pitch = this.pitch + (targetPitch - this.pitch) * smoothFactor;
   }
 
   /**

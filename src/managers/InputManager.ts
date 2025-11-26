@@ -28,6 +28,12 @@ export interface InputState {
   firePressed: boolean;
   /** Fire button held down */
   fireHeld: boolean;
+  /** Gyroscope orientation (if available) */
+  gyroYaw: number;
+  gyroPitch: number;
+  gyroRoll: number;
+  /** Whether gyroscope is active */
+  gyroActive: boolean;
 }
 
 interface TouchInfo {
@@ -68,6 +74,14 @@ export class InputManager {
   private fireButtonDown: boolean = false;
   private fireButtonPressedThisFrame: boolean = false;
 
+  // Gyroscope state
+  private gyroEnabled: boolean = false;
+  private gyroAlpha: number = 0;  // Z axis rotation (compass)
+  private gyroBeta: number = 0;   // X axis rotation (front-back tilt)
+  private gyroGamma: number = 0;  // Y axis rotation (left-right tilt)
+  private gyroInitialAlpha: number | null = null;
+  private gyroInitialBeta: number | null = null;
+
   private constructor() {
     this.inputState = {
       moveVector: new pc.Vec2(),
@@ -76,7 +90,11 @@ export class InputManager {
       rollInput: 0,
       isActive: false,
       firePressed: false,
-      fireHeld: false
+      fireHeld: false,
+      gyroYaw: 0,
+      gyroPitch: 0,
+      gyroRoll: 0,
+      gyroActive: false
     };
   }
 
@@ -182,6 +200,12 @@ export class InputManager {
     }, { passive: false });
   }
 
+  // Camera touch tracking for delta calculation
+  private cameraLastX: number = 0;
+  private cameraLastY: number = 0;
+  private cameraDeltaX: number = 0;
+  private cameraDeltaY: number = 0;
+
   /**
    * Set up camera zone touch events
    */
@@ -194,6 +218,8 @@ export class InputManager {
       e.stopPropagation();
       if (e.touches.length > 0) {
         const touch = e.touches[0];
+        this.cameraLastX = touch.clientX;
+        this.cameraLastY = touch.clientY;
         this.activeTouches.set(-102, {
           id: -102,
           startX: touch.clientX,
@@ -209,10 +235,17 @@ export class InputManager {
       e.preventDefault();
       e.stopPropagation();
       if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        // Calculate delta from last position
+        this.cameraDeltaX += touch.clientX - this.cameraLastX;
+        this.cameraDeltaY += touch.clientY - this.cameraLastY;
+        this.cameraLastX = touch.clientX;
+        this.cameraLastY = touch.clientY;
+
         const touchInfo = this.activeTouches.get(-102);
         if (touchInfo) {
-          touchInfo.currentX = e.touches[0].clientX;
-          touchInfo.currentY = e.touches[0].clientY;
+          touchInfo.currentX = touch.clientX;
+          touchInfo.currentY = touch.clientY;
         }
       }
     }, { passive: false });
@@ -221,12 +254,16 @@ export class InputManager {
       e.preventDefault();
       e.stopPropagation();
       this.activeTouches.delete(-102);
+      this.cameraDeltaX = 0;
+      this.cameraDeltaY = 0;
     }, { passive: false });
 
     cameraZone.addEventListener('touchcancel', (e) => {
       e.preventDefault();
       e.stopPropagation();
       this.activeTouches.delete(-102);
+      this.cameraDeltaX = 0;
+      this.cameraDeltaY = 0;
     }, { passive: false });
   }
 
@@ -544,15 +581,13 @@ export class InputManager {
         }
 
         case 'camera': {
-          const deltaX = touchInfo.currentX - touchInfo.startX;
-          const deltaY = touchInfo.currentY - touchInfo.startY;
+          // Use accumulated delta from touch events
+          this.inputState.lookDelta.x = this.cameraDeltaX * this.LOOK_SENSITIVITY;
+          this.inputState.lookDelta.y = this.cameraDeltaY * this.LOOK_SENSITIVITY;
 
-          this.inputState.lookDelta.x = deltaX * this.LOOK_SENSITIVITY;
-          this.inputState.lookDelta.y = deltaY * this.LOOK_SENSITIVITY;
-
-          // Update start position for continuous movement
-          touchInfo.startX = touchInfo.currentX;
-          touchInfo.startY = touchInfo.currentY;
+          // Reset delta after consuming
+          this.cameraDeltaX = 0;
+          this.cameraDeltaY = 0;
           break;
         }
 
@@ -666,5 +701,124 @@ export class InputManager {
    */
   public isTouchDevice(): boolean {
     return this.isTouch;
+  }
+
+  /**
+   * Check if gyroscope is available
+   */
+  public isGyroAvailable(): boolean {
+    return 'DeviceOrientationEvent' in window;
+  }
+
+  /**
+   * Request gyroscope permission (required for iOS 13+)
+   */
+  public async requestGyroPermission(): Promise<boolean> {
+    // Check if DeviceOrientationEvent exists
+    if (!this.isGyroAvailable()) {
+      console.log('DeviceOrientation not available');
+      return false;
+    }
+
+    // iOS 13+ requires permission request
+    const DeviceOrientationEvent = window.DeviceOrientationEvent as any;
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission === 'granted') {
+          this.setupGyroscope();
+          return true;
+        } else {
+          console.log('Gyroscope permission denied');
+          return false;
+        }
+      } catch (error) {
+        console.error('Error requesting gyroscope permission:', error);
+        return false;
+      }
+    } else {
+      // Non-iOS or older iOS - no permission needed
+      this.setupGyroscope();
+      return true;
+    }
+  }
+
+  /**
+   * Set up gyroscope event listener
+   */
+  private setupGyroscope(): void {
+    window.addEventListener('deviceorientation', (event) => {
+      this.onDeviceOrientation(event);
+    }, true);
+
+    this.gyroEnabled = true;
+    this.inputState.gyroActive = true;
+    console.log('Gyroscope enabled');
+  }
+
+  /**
+   * Handle device orientation event
+   */
+  private onDeviceOrientation(event: DeviceOrientationEvent): void {
+    if (!this.gyroEnabled) return;
+
+    // alpha: 0-360 (compass direction, Z-axis)
+    // beta: -180 to 180 (front-back tilt, X-axis) - 0 when flat, 90 when vertical
+    // gamma: -90 to 90 (left-right tilt, Y-axis)
+
+    const alpha = event.alpha ?? 0;
+    const beta = event.beta ?? 0;
+    const gamma = event.gamma ?? 0;
+
+    // Store initial orientation on first reading
+    if (this.gyroInitialAlpha === null) {
+      this.gyroInitialAlpha = alpha;
+      // Assume phone is held at ~45-60 degree angle when starting
+      this.gyroInitialBeta = beta;
+    }
+
+    this.gyroAlpha = alpha;
+    this.gyroBeta = beta;
+    this.gyroGamma = gamma;
+
+    // Calculate relative orientation from initial position
+    // Yaw: horizontal rotation (left-right look)
+    let deltaAlpha = alpha - this.gyroInitialAlpha;
+    // Normalize to -180 to 180
+    if (deltaAlpha > 180) deltaAlpha -= 360;
+    if (deltaAlpha < -180) deltaAlpha += 360;
+
+    // Pitch: vertical rotation (up-down look)
+    // When phone tilts forward (beta increases), look down
+    // When phone tilts back (beta decreases), look up
+    const deltaBeta = beta - (this.gyroInitialBeta ?? 45);
+
+    // Sensitivity adjustment
+    const yawSensitivity = 1.0;
+    const pitchSensitivity = 0.8;
+
+    // Update input state with gyro values
+    // Invert yaw so turning phone right looks right
+    this.inputState.gyroYaw = -deltaAlpha * yawSensitivity;
+    // Invert pitch so tilting phone forward looks down
+    this.inputState.gyroPitch = -deltaBeta * pitchSensitivity;
+    // Roll from gamma (phone tilt left-right)
+    this.inputState.gyroRoll = gamma * 0.5;
+  }
+
+  /**
+   * Reset gyroscope initial orientation (recalibrate)
+   */
+  public recalibrateGyro(): void {
+    this.gyroInitialAlpha = this.gyroAlpha;
+    this.gyroInitialBeta = this.gyroBeta;
+    console.log('Gyroscope recalibrated');
+  }
+
+  /**
+   * Check if gyroscope is enabled
+   */
+  public isGyroEnabled(): boolean {
+    return this.gyroEnabled;
   }
 }
