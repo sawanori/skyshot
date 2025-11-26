@@ -250,66 +250,38 @@ export class GameStateManager {
       }
     }
 
-    // Prevent double-tap issues
-    let isRequesting = false;
-
-    // Handle click/touch to request permission
-    const handleGyroRequest = async (e: Event) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Prevent double execution
-      if (isRequesting) return;
-      isRequesting = true;
-
-      try {
-        if (inputManager.isGyroEnabled()) {
-          // Already enabled - recalibrate
-          inputManager.recalibrateGyro();
-          if (gyroStatus) {
-            gyroStatus.textContent = 'キャリブレーション完了';
-          }
-          return;
-        }
-
+    // Handle gyro request - simple approach
+    gyroButton.onclick = async () => {
+      if (inputManager.isGyroEnabled()) {
+        // Already enabled - recalibrate
+        inputManager.recalibrateGyro();
         if (gyroStatus) {
-          gyroStatus.textContent = '許可をリクエスト中...';
+          gyroStatus.textContent = 'キャリブレーション完了';
         }
+        return;
+      }
 
-        const granted = await inputManager.requestGyroPermission();
+      if (gyroStatus) {
+        gyroStatus.textContent = '許可をリクエスト中...';
+      }
 
-        if (granted) {
-          gyroButton.classList.add('enabled');
-          gyroButton.innerHTML = '<span class="gyro-icon">✓</span><span>ジャイロON</span>';
-          if (gyroStatus) {
-            gyroStatus.textContent = 'ジャイロセンサー有効';
-          }
-        } else {
-          if (gyroStatus) {
-            // More helpful error message
-            if (!isSecure) {
-              gyroStatus.textContent = 'HTTPS環境でのみ動作します';
-            } else {
-              gyroStatus.textContent = '設定からモーションを許可してください';
-            }
+      const granted = await inputManager.requestGyroPermission();
+
+      if (granted) {
+        gyroButton.classList.add('enabled');
+        gyroButton.innerHTML = '<span class="gyro-icon">✓</span><span>ジャイロON</span>';
+        if (gyroStatus) {
+          gyroStatus.textContent = 'ジャイロセンサー有効';
+        }
+      } else {
+        if (gyroStatus) {
+          if (!isSecure) {
+            gyroStatus.textContent = 'HTTPS環境でのみ動作します';
+          } else {
+            gyroStatus.textContent = '設定からモーションを許可してください';
           }
         }
-      } finally {
-        // Reset after a short delay to prevent rapid re-clicks
-        setTimeout(() => {
-          isRequesting = false;
-        }, 500);
       }
     };
-
-    // Use only one event type to avoid double-firing
-    // touchend is better than touchstart for iOS permission requests
-    gyroButton.addEventListener('touchend', handleGyroRequest, { passive: false });
-    gyroButton.addEventListener('click', (e) => {
-      // Only handle click if not a touch device (to avoid double-firing)
-      if (!('ontouchstart' in window)) {
-        handleGyroRequest(e);
-      }
-    });
   }
 }
