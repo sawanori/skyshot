@@ -217,13 +217,13 @@ export class GameStateManager {
     if (!gyroButton) return;
 
     // Detect in-app browsers (LINE, Facebook, Instagram, Twitter, etc.)
-    const ua = navigator.userAgent.toLowerCase();
+    const ua = navigator.userAgent;
     const isInAppBrowser =
-      ua.includes('line') ||
-      ua.includes('fbav') ||
-      ua.includes('fban') ||
-      ua.includes('instagram') ||
-      ua.includes('twitter');
+      /\bLine\//i.test(ua) ||      // LINE app: "Line/12.0.0"
+      /\bFBAV\//i.test(ua) ||      // Facebook app
+      /\bFBAN\//i.test(ua) ||      // Facebook app
+      /\bInstagram/i.test(ua) ||   // Instagram app
+      /\bTwitter/i.test(ua);       // Twitter/X app
 
     if (isInAppBrowser) {
       gyroButton.setAttribute('disabled', 'true');
