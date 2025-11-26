@@ -940,6 +940,279 @@
       opacity: 0.7;
     }
 
+    /* ========== AUTH UI STYLES ========== */
+
+    .auth-status {
+      margin-bottom: 15px;
+      padding: 8px 20px;
+      background: rgba(0, 255, 255, 0.1);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 4px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+    }
+
+    .auth-status.logged-in {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: rgba(0, 255, 0, 0.3);
+      color: #0f0;
+      text-shadow: 0 0 5px #0f0;
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .auth-btn {
+      padding: 10px 24px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      letter-spacing: 2px;
+      color: #0ff;
+      background: transparent;
+      border: 1px solid rgba(0, 255, 255, 0.5);
+      cursor: pointer;
+      transition: all 0.3s;
+      text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+    }
+
+    .auth-btn:hover {
+      background: rgba(0, 255, 255, 0.15);
+      border-color: #0ff;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    }
+
+    .auth-btn.signup {
+      color: #f0f;
+      border-color: rgba(255, 0, 255, 0.5);
+      text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+    }
+
+    .auth-btn.signup:hover {
+      background: rgba(255, 0, 255, 0.15);
+      border-color: #f0f;
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
+    }
+
+    .auth-btn.logout {
+      color: #f55;
+      border-color: rgba(255, 85, 85, 0.5);
+      text-shadow: 0 0 5px rgba(255, 85, 85, 0.5);
+    }
+
+    .auth-btn.logout:hover {
+      background: rgba(255, 85, 85, 0.15);
+      border-color: #f55;
+      box-shadow: 0 0 15px rgba(255, 85, 85, 0.3);
+    }
+
+    /* Auth Modal */
+    .auth-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 5, 15, 0.95);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 300;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .auth-modal.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .auth-modal-content {
+      position: relative;
+      width: 90%;
+      max-width: 320px;
+      padding: 30px 25px;
+      background: linear-gradient(180deg, rgba(0, 20, 40, 0.95) 0%, rgba(0, 10, 25, 0.98) 100%);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.1), inset 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .auth-close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      width: 30px;
+      height: 30px;
+      background: transparent;
+      border: none;
+      color: rgba(0, 255, 255, 0.5);
+      font-size: 24px;
+      cursor: pointer;
+      transition: color 0.2s, text-shadow 0.2s;
+    }
+
+    .auth-close-btn:hover {
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff;
+    }
+
+    .auth-modal-title {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 400;
+      letter-spacing: 6px;
+      color: #0ff;
+      text-shadow: 0 0 15px #0ff;
+      margin-bottom: 8px;
+    }
+
+    .auth-modal-divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #0ff, transparent);
+      margin: 0 auto 25px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .auth-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .auth-field label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: rgba(0, 255, 255, 0.6);
+    }
+
+    .auth-field input {
+      padding: 12px 14px;
+      background: rgba(0, 10, 20, 0.8);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      color: #0ff;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      letter-spacing: 1px;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    .auth-field input::placeholder {
+      color: rgba(0, 255, 255, 0.3);
+    }
+
+    .auth-field input:focus {
+      border-color: #0ff;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.2), inset 0 0 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .auth-message {
+      min-height: 20px;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-align: center;
+      transition: opacity 0.3s;
+    }
+
+    .auth-message.error {
+      color: #f55;
+      text-shadow: 0 0 5px rgba(255, 85, 85, 0.5);
+    }
+
+    .auth-message.success {
+      color: #0f0;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    }
+
+    .auth-submit-btn {
+      padding: 14px;
+      background: rgba(0, 255, 255, 0.1);
+      border: 2px solid #0ff;
+      color: #0ff;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-shadow: 0 0 8px #0ff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-submit-btn:hover:not(:disabled) {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+    }
+
+    .auth-submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .auth-loading {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .loading-dot {
+      width: 6px;
+      height: 6px;
+      background: #0ff;
+      border-radius: 50%;
+      animation: loading-bounce 0.6s infinite alternate;
+    }
+
+    .loading-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .loading-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes loading-bounce {
+      from { opacity: 0.3; transform: translateY(0); }
+      to { opacity: 1; transform: translateY(-4px); }
+    }
+
+    .auth-toggle {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(0, 255, 255, 0.5);
+    }
+
+    .auth-toggle-btn {
+      background: transparent;
+      border: none;
+      color: #f0f;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+      transition: all 0.2s;
+      margin-left: 8px;
+    }
+
+    .auth-toggle-btn:hover {
+      color: #fff;
+      text-shadow: 0 0 10px #f0f;
+    }
+
     /* ========== PAUSE MENU STYLES ========== */
     #pause-button {
       position: absolute;
@@ -1173,7 +1446,18 @@
         <p class="game-subtitle">３D酔いにご注意下さい</p>
       </div>
 
+      <!-- Auth Status Display -->
+      <div id="auth-status" class="auth-status">
+        <span id="auth-status-text">GUEST MODE</span>
+      </div>
+
       <button class="start-button" id="start-button">START</button>
+
+      <!-- Auth Buttons -->
+      <div class="auth-buttons">
+        <button class="auth-btn" id="login-btn">LOGIN</button>
+        <button class="auth-btn signup" id="signup-btn">SIGN UP</button>
+      </div>
 
       <!-- Gyro enable button (for iOS permission) -->
       <button class="gyro-button" id="gyro-button">
@@ -1185,6 +1469,58 @@
       <div class="controls-hint">
         <p>WASD - MOVE | MOUSE - AIM</p>
         <p>SPACE/SHIFT - ALTITUDE | F/CLICK - FIRE</p>
+      </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-modal">
+      <div class="auth-modal-content">
+        <!-- Close Button -->
+        <button class="auth-close-btn" id="auth-close-btn">&times;</button>
+
+        <!-- Modal Title -->
+        <h2 class="auth-modal-title" id="auth-modal-title">LOGIN</h2>
+        <div class="auth-modal-divider"></div>
+
+        <!-- Auth Form -->
+        <form id="auth-form" class="auth-form">
+          <!-- Username Field (Sign Up only) -->
+          <div class="auth-field" id="username-field" style="display: none;">
+            <label for="auth-username">CALLSIGN</label>
+            <input type="text" id="auth-username" maxlength="12" placeholder="Your pilot name">
+          </div>
+
+          <!-- Email Field -->
+          <div class="auth-field">
+            <label for="auth-email">EMAIL</label>
+            <input type="email" id="auth-email" placeholder="pilot@example.com" required>
+          </div>
+
+          <!-- Password Field -->
+          <div class="auth-field">
+            <label for="auth-password">PASSWORD</label>
+            <input type="password" id="auth-password" minlength="6" placeholder="••••••••" required>
+          </div>
+
+          <!-- Error/Success Message -->
+          <div class="auth-message" id="auth-message"></div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="auth-submit-btn" id="auth-submit-btn">
+            <span id="auth-submit-text">LOGIN</span>
+            <span id="auth-loading" class="auth-loading" style="display: none;">
+              <span class="loading-dot"></span>
+              <span class="loading-dot"></span>
+              <span class="loading-dot"></span>
+            </span>
+          </button>
+        </form>
+
+        <!-- Toggle Auth Mode -->
+        <div class="auth-toggle">
+          <span id="auth-toggle-text">Don't have an account?</span>
+          <button type="button" class="auth-toggle-btn" id="auth-toggle-btn">SIGN UP</button>
+        </div>
       </div>
     </div>
 
@@ -1216,11 +1552,69 @@
       </div>
 
       <!-- Result Screen (Hidden initially) -->
-      <div id="result-screen" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; pointer-events: auto;">
-        <h1 style="color: #ff00ff; font-size: 48px; text-shadow: 0 0 20px #ff00ff; letter-spacing: 8px; margin-bottom: 20px;">TIME UP</h1>
-        <div style="color: #00ffff; font-size: 14px; letter-spacing: 2px; margin-bottom: 10px;">TOTAL SCORE</div>
-        <div id="final-score" style="color: #00ffff; font-size: 64px; font-weight: bold; text-shadow: 0 0 20px #00ffff;">00000</div>
-        <button id="retry-btn" style="margin-top: 40px; padding: 15px 40px; border: 2px solid #ffff00; color: #ffff00; background: transparent; font-family: 'Courier New', monospace; font-size: 18px; letter-spacing: 4px; cursor: pointer; text-shadow: 0 0 10px #ffff00; box-shadow: 0 0 10px rgba(255,255,0,0.3); transition: all 0.3s;">RETRY SYSTEM</button>
+      <div id="result-screen" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(0,5,15,0.97) 0%, rgba(0,15,30,0.95) 50%, rgba(0,5,15,0.97) 100%); flex-direction: column; align-items: center; justify-content: flex-start; pointer-events: auto; padding-top: 40px; overflow-y: auto;">
+
+        <!-- Decorative Lines -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden;">
+          <div style="position: absolute; top: 15%; left: 0; width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(0,255,255,0.3), transparent);"></div>
+          <div style="position: absolute; top: 85%; left: 0; width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,0,255,0.3), transparent);"></div>
+        </div>
+
+        <!-- Title -->
+        <h1 style="color: #ff00ff; font-size: 36px; text-shadow: 0 0 30px #ff00ff, 0 0 60px rgba(255,0,255,0.5); letter-spacing: 10px; margin-bottom: 8px; font-weight: 400;">TIME UP</h1>
+        <div style="width: 120px; height: 2px; background: linear-gradient(90deg, transparent, #ff00ff, transparent); margin-bottom: 20px;"></div>
+
+        <!-- Score Section -->
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="color: rgba(0,255,255,0.6); font-size: 11px; letter-spacing: 3px; margin-bottom: 6px;">YOUR SCORE</div>
+          <div id="final-score" style="color: #00ffff; font-size: 52px; font-weight: bold; text-shadow: 0 0 20px #00ffff, 0 0 40px rgba(0,255,255,0.4); letter-spacing: 4px;">00000</div>
+        </div>
+
+        <!-- Name Input Section -->
+        <div id="name-input-container" style="display: none; text-align: center; margin-bottom: 24px; width: 85%; max-width: 280px;">
+          <div style="color: rgba(0,255,255,0.6); font-size: 10px; letter-spacing: 2px; margin-bottom: 10px;">ENTER YOUR CALLSIGN</div>
+          <div style="position: relative;">
+            <input type="text" id="name-input" maxlength="12" placeholder="PILOT NAME"
+              style="width: 100%; padding: 12px 16px; background: rgba(0,20,40,0.8); border: 1px solid rgba(0,255,255,0.4); color: #0ff; font-family: 'Courier New', monospace; font-size: 16px; letter-spacing: 2px; text-align: center; outline: none; transition: all 0.3s; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);"
+              onfocus="this.style.borderColor='#0ff'; this.style.boxShadow='0 0 15px rgba(0,255,255,0.3), inset 0 0 20px rgba(0,0,0,0.5)';"
+              onblur="this.style.borderColor='rgba(0,255,255,0.4)'; this.style.boxShadow='inset 0 0 20px rgba(0,0,0,0.5)';">
+            <button id="name-submit-btn"
+              style="margin-top: 12px; padding: 10px 32px; border: 1px solid #0f0; color: #0f0; background: rgba(0,255,0,0.1); font-family: 'Courier New', monospace; font-size: 13px; letter-spacing: 3px; cursor: pointer; text-shadow: 0 0 8px #0f0; transition: all 0.3s;"
+              onmouseover="this.style.background='rgba(0,255,0,0.25)'; this.style.boxShadow='0 0 20px rgba(0,255,0,0.4)';"
+              onmouseout="this.style.background='rgba(0,255,0,0.1)'; this.style.boxShadow='none';">
+              REGISTER
+            </button>
+          </div>
+        </div>
+
+        <!-- Leaderboard Section -->
+        <div style="width: 90%; max-width: 320px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 14px;">
+            <div style="flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,0,255,0.5));"></div>
+            <div style="color: #f0f; font-size: 12px; letter-spacing: 4px; text-shadow: 0 0 10px #f0f;">RANKING</div>
+            <div style="flex: 1; height: 1px; background: linear-gradient(270deg, transparent, rgba(255,0,255,0.5));"></div>
+          </div>
+
+          <!-- Leaderboard Header -->
+          <div style="display: flex; padding: 8px 12px; color: rgba(0,255,255,0.5); font-size: 9px; letter-spacing: 1px; border-bottom: 1px solid rgba(0,255,255,0.2);">
+            <span style="width: 32px;">#</span>
+            <span style="flex: 1;">PILOT</span>
+            <span style="width: 70px; text-align: right;">SCORE</span>
+          </div>
+
+          <!-- Leaderboard Entries Container -->
+          <div id="leaderboard-container" style="max-height: 200px; overflow-y: auto;">
+            <!-- Entries will be dynamically inserted here -->
+          </div>
+        </div>
+
+        <!-- Retry Button -->
+        <button id="retry-btn"
+          style="margin-top: auto; margin-bottom: 30px; padding: 14px 48px; border: 2px solid #ffff00; color: #ffff00; background: transparent; font-family: 'Courier New', monospace; font-size: 16px; letter-spacing: 5px; cursor: pointer; text-shadow: 0 0 10px #ffff00; box-shadow: 0 0 15px rgba(255,255,0,0.2); transition: all 0.3s; position: relative; overflow: hidden;"
+          onmouseover="this.style.background='rgba(255,255,0,0.15)'; this.style.boxShadow='0 0 30px rgba(255,255,0,0.4)';"
+          onmouseout="this.style.background='transparent'; this.style.boxShadow='0 0 15px rgba(255,255,0,0.2)';">
+          RETRY
+        </button>
       </div>
     </div>
 

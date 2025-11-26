@@ -1,0 +1,65 @@
+{
+  "project_metadata": {
+    "name": "Web Shooter Leaderboard System",
+    "description": "Integration of Supabase Auth and Database for player scoring.",
+    "stack": ["PlayCanvas", "TypeScript", "Supabase SDK"]
+  },
+  "database_configuration": {
+    "dialect": "PostgreSQL",
+    "tables": [
+      {
+        "name": "profiles",
+        "columns": ["id (uuid, pk)", "username (text)", "updated_at"],
+        "rls_policy": "Public Read, Owner Update"
+      },
+      {
+        "name": "game_results",
+        "columns": ["id (bigint, pk)", "user_id (uuid, fk)", "score (int)", "played_at"],
+        "rls_policy": "Public Read, Owner Insert"
+      }
+    ],
+    "views": [
+      {
+        "name": "leaderboard_view",
+        "logic": "Aggregates MAX(score) per user from game_results joined with profiles."
+      }
+    ],
+    "triggers": [
+      {
+        "name": "on_auth_user_created",
+        "logic": "Automatically inserts a row into 'profiles' when a new user signs up."
+      }
+    ],
+    "raw_sql_execution_required": true,
+    "sql_script": "-- Copy the SQL provided in the YAML specification --"
+  },
+  "frontend_tasks": {
+    "package_installation": "npm install @supabase/supabase-js",
+    "auth_flow": {
+      "method": "Anonymous Login",
+      "implementation": "supabase.auth.signInAnonymously() on app start."
+    },
+    "data_flow": [
+      {
+        "action": "Record Score",
+        "table": "game_results",
+        "trigger": "Game Over event"
+      },
+      {
+        "action": "Update Name",
+        "table": "profiles",
+        "trigger": "User submits name in Result Screen"
+      },
+      {
+        "action": "Get Ranking",
+        "view": "leaderboard_view",
+        "trigger": "Result Screen display"
+      }
+    ]
+  },
+  "constraints": {
+    "no_prisma": true,
+    "use_generated_types": false,
+    "security": "Must use RLS. Do not use Service Role Key in client."
+  }
+}
