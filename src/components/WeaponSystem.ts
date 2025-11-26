@@ -325,8 +325,11 @@ export class WeaponSystem {
     // Spawn hit effect
     this.spawnHitEffect(point);
 
-    // Check for Enemy tag and apply damage
+    // Check for Enemy tag and apply damage/score
     if (entity.tags.has('Enemy')) {
+      // Fire enemy:hit event for score (100 points per hit)
+      this.app.fire('enemy:hit', 100);
+
       // Trigger damage event (can be handled by EnemyAI)
       entity.fire('damage', this.config.damage);
     }

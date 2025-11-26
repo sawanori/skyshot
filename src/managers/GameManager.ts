@@ -77,7 +77,10 @@ export class GameManager {
       });
     }
 
-    // Subscribe to enemy:dead event
+    // Subscribe to enemy:hit event (score on hit)
+    app.on('enemy:hit', this.onEnemyHit, this);
+
+    // Subscribe to enemy:dead event (bonus score on kill)
     app.on('enemy:dead', this.onEnemyDead, this);
 
     // Subscribe to game:start event
@@ -129,6 +132,14 @@ export class GameManager {
       // Format score as 5-digit zero-padded
       const scoreStr = this.currentScore.toString().padStart(5, '0');
       this.scoreDisplay.textContent = scoreStr;
+    }
+  }
+
+  private onEnemyHit(points: number): void {
+    if (this.isPlaying) {
+      this.currentScore += points;
+      this.stats.score = this.currentScore;
+      this.updateScoreDisplay();
     }
   }
 
