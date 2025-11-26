@@ -202,6 +202,12 @@ export class InputManager {
         currentY: y,
         zone
       });
+
+      // Fire when touching camera zone (center of screen)
+      if (zone === 'camera') {
+        this.fireButtonPressedThisFrame = true;
+        this.fireButtonDown = true;
+      }
     }
   }
 
@@ -235,6 +241,13 @@ export class InputManager {
 
     for (let i = 0; i < event.changedTouches.length; i++) {
       const touch = event.changedTouches[i];
+      const touchInfo = this.activeTouches.get(touch.identifier);
+
+      // Stop firing when camera zone touch ends
+      if (touchInfo && touchInfo.zone === 'camera') {
+        this.fireButtonDown = false;
+      }
+
       this.activeTouches.delete(touch.identifier);
     }
   }
@@ -330,7 +343,8 @@ export class InputManager {
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const maxJoystickRadius = Math.min(rect.width, rect.height) * 0.15;
+    // Smaller radius for more sensitive joystick control
+    const maxJoystickRadius = Math.min(rect.width, rect.height) * 0.08;
 
     for (const touchInfo of this.activeTouches.values()) {
       switch (touchInfo.zone) {
@@ -339,8 +353,13 @@ export class InputManager {
           const deltaY = touchInfo.currentY - touchInfo.startY;
 
           // Normalize to -1 to 1 range, clamped by max radius
+          // X controls left/right strafe, Y controls forward/backward boost
           this.inputState.moveVector.x = Math.max(-1, Math.min(1, deltaX / maxJoystickRadius));
           this.inputState.moveVector.y = Math.max(-1, Math.min(1, -deltaY / maxJoystickRadius)); // Invert Y
+
+          // Also add slight yaw rotation based on joystick X (more intuitive for mobile)
+          // This makes left/right feel like steering
+          this.inputState.lookDelta.x += this.inputState.moveVector.x * 1.5;
           break;
         }
 
