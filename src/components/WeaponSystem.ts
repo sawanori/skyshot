@@ -55,6 +55,9 @@ export class WeaponSystem {
   // Sound effects (Web Audio API for low latency)
   private audioContext: AudioContext | null = null;
   private gunSoundBuffer: AudioBuffer | null = null;
+  private reloadSoundBuffer: AudioBuffer | null = null;
+  private reloadTimeoutId: number | null = null;
+  private readonly RELOAD_DELAY: number = 0.3; // Seconds after last shot to play reload
 
   constructor(entity: pc.Entity, app: pc.Application, config?: Partial<WeaponConfig>) {
     this.entity = entity;
@@ -78,6 +81,7 @@ export class WeaponSystem {
     // Use Web Audio API for lower latency
     this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
 
+    // Load gun sound
     fetch('/assets/GunSound.mp3')
       .then(response => response.arrayBuffer())
       .then(arrayBuffer => this.audioContext!.decodeAudioData(arrayBuffer))
@@ -86,6 +90,17 @@ export class WeaponSystem {
       })
       .catch(err => {
         console.warn('Failed to load gun sound:', err);
+      });
+
+    // Load reload sound
+    fetch('/assets/reload.mp3')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => this.audioContext!.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        this.reloadSoundBuffer = audioBuffer;
+      })
+      .catch(err => {
+        console.warn('Failed to load reload sound:', err);
       });
   }
 
@@ -108,6 +123,34 @@ export class WeaponSystem {
 
       // Play immediately
       source.start(0);
+
+      // Cancel any pending reload sound (we're still firing)
+      if (this.reloadTimeoutId !== null) {
+        window.clearTimeout(this.reloadTimeoutId);
+        this.reloadTimeoutId = null;
+      }
+
+      // Schedule reload sound after firing stops
+      this.reloadTimeoutId = window.setTimeout(() => {
+        this.playReloadSound();
+        this.reloadTimeoutId = null;
+      }, this.RELOAD_DELAY * 1000);
+    }
+  }
+
+  private playReloadSound(delay: number = 0): void {
+    if (this.audioContext && this.reloadSoundBuffer) {
+      const source = this.audioContext.createBufferSource();
+      const gainNode = this.audioContext.createGain();
+
+      source.buffer = this.reloadSoundBuffer;
+      gainNode.gain.value = 0.4;
+
+      source.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+
+      // Play with delay (in seconds)
+      source.start(this.audioContext.currentTime + delay);
     }
   }
 

@@ -1,0 +1,76 @@
+{
+  "feature_metadata": {
+    "name": "Score Attack Mode",
+    "description": "Implementation of a 60-second time limit game loop with score tracking and UI overlay.",
+    "target_engine": "PlayCanvas",
+    "language": "TypeScript"
+  },
+  "ui_specifications": {
+    "dom_structure": {
+      "container_id": "ui-layer",
+      "style": "position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; user-select: none; font-family: 'Courier New', monospace;",
+      "elements": [
+        {
+          "id": "score-display",
+          "position": "top-left",
+          "color": "#00ffff",
+          "format": "5-digit zero-padded (e.g., 00150)",
+          "label": "SCORE"
+        },
+        {
+          "id": "timer-display",
+          "position": "top-center",
+          "color": "#ffff00",
+          "format": "Seconds with 2 decimal places (e.g., 60.00)",
+          "behavior": "Changes to red (#ff0000) when time <= 10.0s",
+          "label": "TIME LIMIT"
+        },
+        {
+          "id": "result-screen",
+          "initial_state": "display: none",
+          "style": "background: rgba(0,0,0,0.9); pointer-events: auto; flex-direction: column;",
+          "content": [
+            "Text: TIME UP (Color: #ff00ff)",
+            "Text: TOTAL SCORE",
+            "Element: #final-score (Color: #00ffff)",
+            "Button: #retry-btn (Label: RETRY SYSTEM)"
+          ]
+        }
+      ]
+    },
+    "html_snippet": "<div id=\"ui-layer\" style=\"position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; user-select: none;\"><div style=\"position: absolute; top: 20px; left: 20px; color: #00ffff; font-family: 'Courier New', monospace;\"><div>SCORE</div><div id=\"score-display\" style=\"font-size: 32px;\">00000</div></div><div style=\"position: absolute; top: 20px; width: 100%; text-align: center; color: #ffff00; font-family: 'Courier New', monospace;\"><div>TIME LIMIT</div><div id=\"timer-display\" style=\"font-size: 42px;\">60.00</div></div><div id=\"result-screen\" style=\"display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; pointer-events: auto;\"><h1 style=\"color: #ff00ff;\">TIME UP</h1><div id=\"final-score\" style=\"color: #00ffff; font-size: 64px;\">0</div><button id=\"retry-btn\" style=\"margin-top: 40px; border: 2px solid #ffff00; color: #ffff00; background: transparent;\">RETRY SYSTEM</button></div></div>"
+  },
+  "logic_specifications": {
+    "GameManager": {
+      "path": "src/managers/GameManager.ts",
+      "attributes": {
+        "timeLimit": { "type": "number", "default": 60 }
+      },
+      "responsibilities": [
+        "Manage currentTime and currentScore",
+        "Update DOM elements every frame",
+        "Listen to 'enemy:dead' event to add score",
+        "Handle Game Over state when time <= 0",
+        "Handle Retry logic"
+      ],
+      "event_handling": {
+        "subscribe": "app.on('enemy:dead', (points) => { ... })",
+        "publish": [
+          "app.fire('game:reset')",
+          "app.fire('game:over')"
+        ]
+      }
+    },
+    "EnemyIntegration": {
+      "target_file": "src/components/Enemy.ts",
+      "required_change": "In the die() method, fire 'enemy:dead' event with score value.",
+      "code_snippet": "this.app.fire('enemy:dead', 100);"
+    }
+  },
+  "editor_setup_instructions": [
+    "Create an Empty Entity named 'GameManager' in the Root hierarchy.",
+    "Add Script Component to 'GameManager' entity.",
+    "Attach 'GameManager.ts' script.",
+    "Verify 'Time Limit' attribute is set to 60."
+  ]
+}

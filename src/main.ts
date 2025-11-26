@@ -8,6 +8,7 @@ import { InputManager } from './managers/InputManager';
 import { PlayerController } from './components/PlayerController';
 import { WeaponSystem } from './components/WeaponSystem';
 import { GameStateManager, GameState } from './managers/GameStateManager';
+import { GameManager } from './managers/GameManager';
 import { HUDManager } from './ui/HUDManager';
 import { createGridFloor, createDirectionalLight, configureSceneEnvironment } from './scene/SceneSetup';
 import { createEnemyWaves } from './managers/EnemyManager';
@@ -19,6 +20,7 @@ let app: pc.Application;
 // Manager instances
 let hudManager: HUDManager;
 let gameStateManager: GameStateManager;
+let gameManager: GameManager;
 
 // Player controller reference for HUD updates
 let playerControllerRef: PlayerController | null = null;
@@ -82,6 +84,10 @@ function initializeManagers(): void {
   gameStateManager = GameStateManager.getInstance();
   gameStateManager.initialize(app);
 
+  // Initialize Score Attack GameManager
+  gameManager = GameManager.getInstance();
+  gameManager.initialize(app);
+
   const hud = document.getElementById('hud');
   if (hud) {
     hud.style.display = 'none';
@@ -97,6 +103,9 @@ function setupUpdateLoop(): void {
 
     if (state === GameState.Playing) {
       InputManager.getInstance().update();
+
+      // Update GameManager for Score Attack timer
+      gameManager.update(dt);
 
       if (playerControllerRef) {
         hudManager.setGameStartTime(gameStateManager.gameStartTime);

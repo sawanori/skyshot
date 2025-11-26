@@ -84,6 +84,9 @@ export class EnemyAI {
   }
 
   private die(): void {
+    // Fire enemy:dead event with score value
+    this._app.fire('enemy:dead', 100);
+
     // TODO: Play death effect
     // TODO: Drop items
     this.entity.destroy();

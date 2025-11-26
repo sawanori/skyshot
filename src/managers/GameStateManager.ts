@@ -73,6 +73,11 @@ export class GameStateManager {
       hud.style.display = 'block';
     }
 
+    // Fire game:start event for Score Attack mode
+    if (this.app) {
+      this.app.fire('game:start');
+    }
+
     this.requestPointerLock();
   }
 
