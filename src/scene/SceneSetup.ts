@@ -2,7 +2,7 @@
  * SceneSetup.ts - Scene initialization and environment setup
  *
  * Handles:
- * - Grid floor creation
+ * - Infinite grid floor that follows the player
  * - Lighting setup
  * - Fog configuration
  */
@@ -10,68 +10,192 @@
 import * as pc from 'playcanvas';
 import { SCENE_CONFIG, LIGHT_CONFIG, GRID_CONFIG } from '../config/GameConfig';
 
-/**
- * Creates the neon grid floor with collision
- */
-export function createGridFloor(app: pc.Application): void {
-  const floor = new pc.Entity('GridFloor');
+// Infinite grid configuration
+const INFINITE_GRID_CONFIG = {
+  // Size of each grid tile
+  tileSize: 200,
+  // Number of tiles in each direction (3x3 grid around player)
+  tilesPerSide: 3,
+  // Grid line spacing
+  lineSpacing: 10,
+  // Line thickness
+  lineWidth: 0.1,
+  lineHeight: 0.02,
+};
 
-  floor.addComponent('render', {
-    type: 'plane',
-  });
+// Grid manager for infinite scrolling
+class InfiniteGridManager {
+  private static instance: InfiniteGridManager;
+  private app: pc.Application | null = null;
+  private player: pc.Entity | null = null;
+  private gridTiles: pc.Entity[] = [];
+  private gridLines: pc.Entity[] = [];
+  private gridMaterial: pc.StandardMaterial | null = null;
+  private floorMaterial: pc.StandardMaterial | null = null;
+  private lastPlayerTileX: number = 0;
+  private lastPlayerTileZ: number = 0;
 
-  const material = new pc.StandardMaterial();
-  material.diffuse = new pc.Color(0.0, 0.1, 0.1);
-  material.emissive = new pc.Color(0, 0.5, 0.5);
-  material.emissiveIntensity = 0.5;
-  material.update();
+  private constructor() {}
 
-  if (floor.render) {
-    floor.render.meshInstances[0].material = material;
+  public static getInstance(): InfiniteGridManager {
+    if (!InfiniteGridManager.instance) {
+      InfiniteGridManager.instance = new InfiniteGridManager();
+    }
+    return InfiniteGridManager.instance;
   }
 
-  floor.setLocalScale(GRID_CONFIG.size, 1, GRID_CONFIG.size);
-  floor.setPosition(0, 0, 0);
+  public initialize(app: pc.Application): void {
+    this.app = app;
+    this.createMaterials();
+    this.createInitialGrid();
 
-  app.root.addChild(floor);
+    // Set up update loop
+    app.on('update', this.update, this);
+  }
 
-  createGridLines(app);
+  public setPlayer(player: pc.Entity): void {
+    this.player = player;
+  }
+
+  private createMaterials(): void {
+    // Floor material
+    this.floorMaterial = new pc.StandardMaterial();
+    this.floorMaterial.diffuse = new pc.Color(0.0, 0.1, 0.1);
+    this.floorMaterial.emissive = new pc.Color(0, 0.5, 0.5);
+    this.floorMaterial.emissiveIntensity = 0.5;
+    this.floorMaterial.update();
+
+    // Grid line material
+    this.gridMaterial = new pc.StandardMaterial();
+    this.gridMaterial.diffuse = new pc.Color(0, 0, 0);
+    this.gridMaterial.emissive = GRID_CONFIG.lineColor;
+    this.gridMaterial.emissiveIntensity = 1;
+    this.gridMaterial.update();
+  }
+
+  private createInitialGrid(): void {
+    if (!this.app) return;
+
+    const tileSize = INFINITE_GRID_CONFIG.tileSize;
+    const tilesPerSide = INFINITE_GRID_CONFIG.tilesPerSide;
+    const halfTiles = Math.floor(tilesPerSide / 2);
+
+    // Create grid tiles around origin
+    for (let x = -halfTiles; x <= halfTiles; x++) {
+      for (let z = -halfTiles; z <= halfTiles; z++) {
+        this.createGridTile(x * tileSize, z * tileSize);
+      }
+    }
+  }
+
+  private createGridTile(centerX: number, centerZ: number): void {
+    if (!this.app || !this.floorMaterial || !this.gridMaterial) return;
+
+    const tileSize = INFINITE_GRID_CONFIG.tileSize;
+    const lineSpacing = INFINITE_GRID_CONFIG.lineSpacing;
+    const lineWidth = INFINITE_GRID_CONFIG.lineWidth;
+    const lineHeight = INFINITE_GRID_CONFIG.lineHeight;
+
+    // Create floor plane
+    const floor = new pc.Entity(`GridFloor_${centerX}_${centerZ}`);
+    floor.addComponent('render', { type: 'plane' });
+    if (floor.render) {
+      floor.render.meshInstances[0].material = this.floorMaterial;
+    }
+    floor.setLocalScale(tileSize, 1, tileSize);
+    floor.setPosition(centerX, 0, centerZ);
+    this.app.root.addChild(floor);
+    this.gridTiles.push(floor);
+
+    // Create grid lines for this tile
+    const halfSize = tileSize / 2;
+
+    for (let i = -halfSize; i <= halfSize; i += lineSpacing) {
+      // X-axis lines (running along Z)
+      const lineX = new pc.Entity(`GridLineX_${centerX}_${centerZ}_${i}`);
+      lineX.addComponent('render', { type: 'box' });
+      if (lineX.render) {
+        lineX.render.meshInstances[0].material = this.gridMaterial;
+      }
+      lineX.setLocalScale(lineWidth, lineHeight, tileSize);
+      lineX.setPosition(centerX + i, 0.01, centerZ);
+      this.app.root.addChild(lineX);
+      this.gridLines.push(lineX);
+
+      // Z-axis lines (running along X)
+      const lineZ = new pc.Entity(`GridLineZ_${centerX}_${centerZ}_${i}`);
+      lineZ.addComponent('render', { type: 'box' });
+      if (lineZ.render) {
+        lineZ.render.meshInstances[0].material = this.gridMaterial;
+      }
+      lineZ.setLocalScale(tileSize, lineHeight, lineWidth);
+      lineZ.setPosition(centerX, 0.01, centerZ + i);
+      this.app.root.addChild(lineZ);
+      this.gridLines.push(lineZ);
+    }
+  }
+
+  private update(): void {
+    if (!this.player || !this.app) return;
+
+    const playerPos = this.player.getPosition();
+    const tileSize = INFINITE_GRID_CONFIG.tileSize;
+
+    // Calculate which tile the player is in
+    const currentTileX = Math.floor(playerPos.x / tileSize);
+    const currentTileZ = Math.floor(playerPos.z / tileSize);
+
+    // Check if player moved to a different tile
+    if (currentTileX !== this.lastPlayerTileX || currentTileZ !== this.lastPlayerTileZ) {
+      this.repositionGrid(currentTileX, currentTileZ);
+      this.lastPlayerTileX = currentTileX;
+      this.lastPlayerTileZ = currentTileZ;
+    }
+  }
+
+  private repositionGrid(playerTileX: number, playerTileZ: number): void {
+    if (!this.app) return;
+
+    // Remove all existing grid elements
+    for (const tile of this.gridTiles) {
+      tile.destroy();
+    }
+    for (const line of this.gridLines) {
+      line.destroy();
+    }
+    this.gridTiles = [];
+    this.gridLines = [];
+
+    // Create new grid tiles around player's current tile
+    const tileSize = INFINITE_GRID_CONFIG.tileSize;
+    const tilesPerSide = INFINITE_GRID_CONFIG.tilesPerSide;
+    const halfTiles = Math.floor(tilesPerSide / 2);
+
+    for (let x = -halfTiles; x <= halfTiles; x++) {
+      for (let z = -halfTiles; z <= halfTiles; z++) {
+        const tileX = (playerTileX + x) * tileSize;
+        const tileZ = (playerTileZ + z) * tileSize;
+        this.createGridTile(tileX, tileZ);
+      }
+    }
+  }
+}
+
+// Export singleton instance
+export const infiniteGridManager = InfiniteGridManager.getInstance();
+
+/**
+ * Creates the infinite neon grid floor
+ */
+export function createGridFloor(app: pc.Application): void {
+  infiniteGridManager.initialize(app);
 }
 
 /**
- * Creates the neon grid lines
+ * Set the player entity for grid to follow
  */
-function createGridLines(app: pc.Application): void {
-  const gridMaterial = new pc.StandardMaterial();
-  gridMaterial.diffuse = new pc.Color(0, 0, 0);
-  gridMaterial.emissive = GRID_CONFIG.lineColor;
-  gridMaterial.emissiveIntensity = 1;
-  gridMaterial.update();
-
-  const gridSize = 200;
-  const gridSpacing = 10;
-
-  for (let i = -gridSize; i <= gridSize; i += gridSpacing) {
-    // X-axis lines
-    const lineX = new pc.Entity(`GridLineX_${i}`);
-    lineX.addComponent('render', { type: 'box' });
-    if (lineX.render) {
-      lineX.render.meshInstances[0].material = gridMaterial;
-    }
-    lineX.setLocalScale(0.1, 0.02, gridSize * 2);
-    lineX.setPosition(i, 0.01, 0);
-    app.root.addChild(lineX);
-
-    // Z-axis lines
-    const lineZ = new pc.Entity(`GridLineZ_${i}`);
-    lineZ.addComponent('render', { type: 'box' });
-    if (lineZ.render) {
-      lineZ.render.meshInstances[0].material = gridMaterial;
-    }
-    lineZ.setLocalScale(gridSize * 2, 0.02, 0.1);
-    lineZ.setPosition(0, 0.01, i);
-    app.root.addChild(lineZ);
-  }
+export function setGridPlayer(player: pc.Entity): void {
+  infiniteGridManager.setPlayer(player);
 }
 
 /**

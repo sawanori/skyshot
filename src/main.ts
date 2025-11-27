@@ -10,7 +10,7 @@ import { WeaponSystem } from './components/WeaponSystem';
 import { GameStateManager, GameState } from './managers/GameStateManager';
 import { GameManager } from './managers/GameManager';
 import { HUDManager } from './ui/HUDManager';
-import { createGridFloor, createDirectionalLight, configureSceneEnvironment } from './scene/SceneSetup';
+import { createGridFloor, createDirectionalLight, configureSceneEnvironment, setGridPlayer } from './scene/SceneSetup';
 import { EnemyManager } from './managers/EnemyManager';
 import { SCENE_CONFIG, CAMERA_CONFIG, PLAYER_CONFIG } from './config/GameConfig';
 
@@ -133,6 +133,9 @@ function setupScene(): void {
   createDirectionalLight(app);
   configureSceneEnvironment(app);
   createGridFloor(app);
+
+  // Set player reference for infinite grid to follow
+  setGridPlayer(camera);
 
   // Initialize EnemyManager with player reference for infinite spawn system
   enemyManager = EnemyManager.getInstance();
