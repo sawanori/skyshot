@@ -35,6 +35,7 @@ export class AuthUI {
   private modalTitle: HTMLElement | null = null;
   private toggleText: HTMLElement | null = null;
   private toggleBtn: HTMLElement | null = null;
+  private googleBtn: HTMLElement | null = null;
 
   private constructor() {
     this.authManager = AuthManager.getInstance();
@@ -72,6 +73,7 @@ export class AuthUI {
     this.modalTitle = document.getElementById('auth-modal-title');
     this.toggleText = document.getElementById('auth-toggle-text');
     this.toggleBtn = document.getElementById('auth-toggle-btn');
+    this.googleBtn = document.getElementById('google-signin-btn');
 
     // Cache auth buttons container
     this.authButtons = this.loginBtn?.parentElement || null;
@@ -94,6 +96,9 @@ export class AuthUI {
     this.toggleBtn?.addEventListener('click', () => {
       this.setMode(this.mode === 'login' ? 'signup' : 'login');
     });
+
+    // Google sign in
+    this.googleBtn?.addEventListener('click', () => this.handleGoogleSignIn());
 
     // Form submission
     this.authForm?.addEventListener('submit', (e) => this.handleSubmit(e));
@@ -299,5 +304,30 @@ export class AuthUI {
 
     // Re-login anonymously
     await this.authManager.login();
+  }
+
+
+  /**
+   * Handle Google sign in button click.
+   */
+  private async handleGoogleSignIn(): Promise<void> {
+    if (this.isLoading) return;
+
+    this.setLoading(true);
+    this.clearMessage();
+
+    try {
+      const result = await this.authManager.signInWithGoogle();
+
+      if (!result.success) {
+        this.showMessage(result.message || 'Failed to sign in with Google.', 'error');
+      }
+      // If successful, the page will redirect to Google
+    } catch (err) {
+      this.showMessage('An unexpected error occurred.', 'error');
+      console.error('[AuthUI] Google sign in error:', err);
+    } finally {
+      this.setLoading(false);
+    }
   }
 }

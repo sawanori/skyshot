@@ -386,6 +386,57 @@ export class AuthManager {
     }
   }
 
+
+  /**
+   * Sign in with Google OAuth.
+   * Opens a popup for Google authentication.
+   */
+  public async signInWithGoogle(): Promise<AuthResult> {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        console.error('[AuthManager] Google sign in failed:', error.message);
+        return {
+          success: false,
+          user: null,
+          session: null,
+          error,
+          message: this.getErrorMessage(error.message),
+        };
+      }
+
+      // OAuth redirects, so we won't get here immediately
+      // The session will be handled on redirect callback
+      console.log('[AuthManager] Google OAuth initiated');
+      return {
+        success: true,
+        user: null,
+        session: null,
+        error: null,
+        message: 'Redirecting to Google...',
+      };
+    } catch (err) {
+      console.error('[AuthManager] Unexpected error during Google sign in:', err);
+      return {
+        success: false,
+        user: null,
+        session: null,
+        error: err as AuthError,
+        message: 'An unexpected error occurred.',
+      };
+    }
+  }
+
   /**
    * Get the current user's nickname/username from profiles table.
    */
