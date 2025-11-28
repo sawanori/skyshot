@@ -2919,6 +2919,166 @@
     </div>
   </div>
 
+  <!-- SNS In-App Browser Detection Overlay -->
+  <div id="sns-browser-overlay" style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+    z-index: 99999;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+  ">
+    <div style="
+      max-width: 350px;
+      text-align: center;
+      color: #fff;
+      font-family: 'Courier New', monospace;
+    ">
+      <div style="
+        font-size: 48px;
+        margin-bottom: 20px;
+      ">⚠️</div>
+      <h2 style="
+        color: #00ffff;
+        font-size: 20px;
+        margin-bottom: 15px;
+        text-shadow: 0 0 10px #00ffff;
+      ">外部ブラウザで開いてください</h2>
+      <p style="
+        font-size: 14px;
+        line-height: 1.8;
+        color: #aaa;
+        margin-bottom: 25px;
+      ">
+        このゲームはジャイロセンサーを使用します。<br>
+        SNSアプリ内ブラウザではジャイロが使用できないため、<br>
+        外部ブラウザで開き直してください。
+      </p>
+
+      <!-- iOS Safari instructions -->
+      <div id="ios-instructions" style="display: none; margin-bottom: 20px;">
+        <p style="font-size: 13px; color: #ffff00; margin-bottom: 10px;">
+          📱 iPhoneの場合
+        </p>
+        <p style="font-size: 12px; color: #888; line-height: 1.6;">
+          右下の「⋯」または「共有」ボタン →<br>
+          「Safariで開く」をタップ
+        </p>
+      </div>
+
+      <!-- Android Chrome instructions -->
+      <div id="android-instructions" style="display: none; margin-bottom: 20px;">
+        <p style="font-size: 13px; color: #ffff00; margin-bottom: 10px;">
+          📱 Androidの場合
+        </p>
+        <p style="font-size: 12px; color: #888; line-height: 1.6;">
+          右上の「⋮」メニュー →<br>
+          「ブラウザで開く」をタップ
+        </p>
+      </div>
+
+      <!-- Copy URL button -->
+      <button id="copy-url-btn" style="
+        padding: 14px 30px;
+        background: transparent;
+        border: 2px solid #00ffff;
+        color: #00ffff;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        cursor: pointer;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+        text-shadow: 0 0 5px #00ffff;
+      " onmouseover="this.style.background='rgba(0,255,255,0.15)'" onmouseout="this.style.background='transparent'">
+        URLをコピー
+      </button>
+
+      <p id="copy-success" style="
+        display: none;
+        font-size: 12px;
+        color: #00ff00;
+        margin-top: 10px;
+      ">✓ コピーしました！ブラウザに貼り付けてください</p>
+    </div>
+  </div>
+
+  <script>
+    // Detect SNS in-app browsers
+    (function() {
+      const ua = navigator.userAgent.toLowerCase();
+
+      // Detect common in-app browsers
+      const isLine = ua.includes('line');
+      const isInstagram = ua.includes('instagram');
+      const isFacebook = ua.includes('fban') || ua.includes('fbav') || ua.includes('fb_iab');
+      const isTwitter = ua.includes('twitter');
+      const isTikTok = ua.includes('tiktok') || ua.includes('bytedance');
+      const isMessenger = ua.includes('messenger');
+      const isWeChat = ua.includes('micromessenger');
+
+      const isInAppBrowser = isLine || isInstagram || isFacebook || isTwitter || isTikTok || isMessenger || isWeChat;
+
+      if (isInAppBrowser) {
+        const overlay = document.getElementById('sns-browser-overlay');
+        const iosInstructions = document.getElementById('ios-instructions');
+        const androidInstructions = document.getElementById('android-instructions');
+        const copyBtn = document.getElementById('copy-url-btn');
+        const copySuccess = document.getElementById('copy-success');
+
+        // Show overlay
+        overlay.style.display = 'flex';
+
+        // Show platform-specific instructions
+        const isIOS = /iphone|ipad|ipod/.test(ua);
+        const isAndroid = ua.includes('android');
+
+        if (isIOS) {
+          iosInstructions.style.display = 'block';
+        } else if (isAndroid) {
+          androidInstructions.style.display = 'block';
+        }
+
+        // Copy URL button handler
+        copyBtn.addEventListener('click', function() {
+          const url = window.location.href;
+
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function() {
+              copySuccess.style.display = 'block';
+            }).catch(function() {
+              fallbackCopy(url);
+            });
+          } else {
+            fallbackCopy(url);
+          }
+        });
+
+        function fallbackCopy(text) {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+            document.execCommand('copy');
+            copySuccess.style.display = 'block';
+          } catch (e) {
+            alert('URLをコピーできませんでした: ' + text);
+          }
+          document.body.removeChild(textarea);
+        }
+      }
+    })();
+  </script>
+
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
