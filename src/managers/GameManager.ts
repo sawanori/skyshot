@@ -364,6 +364,8 @@ export class GameManager {
         console.log('[GameManager] Score submitted successfully');
         // Show name input UI
         this.showNameInputUI();
+        // Refresh player stats to update HIGH SCORE on title screen
+        await this.refreshPlayerStats();
       } else {
         console.error('[GameManager] Failed to submit score:', result.error?.message);
       }
