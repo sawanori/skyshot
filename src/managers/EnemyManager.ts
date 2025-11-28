@@ -20,8 +20,7 @@ const SPAWN_CONFIG = {
   spawnDistanceMin: 40,
   spawnDistanceMax: 100,
   xSpread: 60,
-  yMin: 5,
-  yMax: 35,
+  ySpread: 15, // Vertical spread around player height
   enemySpeed: 12,
   despawnDistance: 30,
   maxActiveEnemies: 50,
@@ -131,8 +130,9 @@ export class EnemyManager {
 
       const spawnX =
         playerPos.x + playerForward.x * distance + (Math.random() - 0.5) * SPAWN_CONFIG.xSpread;
-      const spawnY =
-        SPAWN_CONFIG.yMin + Math.random() * (SPAWN_CONFIG.yMax - SPAWN_CONFIG.yMin);
+      // Spawn around player's height with some spread, clamped to valid range
+      const spawnY = Math.max(2, Math.min(48,
+        playerPos.y + (Math.random() - 0.5) * SPAWN_CONFIG.ySpread));
       const spawnZ =
         playerPos.z + playerForward.z * distance + (Math.random() - 0.5) * SPAWN_CONFIG.xSpread;
 
