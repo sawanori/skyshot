@@ -61,9 +61,14 @@ export class GameStateManager {
   public startGame(): void {
     if (this._state !== GameState.Title) return;
 
-    // Check if we need gyro permission (mobile devices only)
-    if (this.needsGyroPermission()) {
-      this.showGyroPermissionOverlay();
+    // Check if gyro permission is needed but not granted
+    if (this.requiresGyroPermission() && !this.gyroPermissionGranted) {
+      // Show message to user
+      const gyroStatus = document.getElementById('gyro-status');
+      if (gyroStatus) {
+        gyroStatus.textContent = '↑ 先にジャイロを許可してください';
+        gyroStatus.style.color = '#ff4444';
+      }
       return;
     }
 
@@ -71,17 +76,13 @@ export class GameStateManager {
   }
 
   /**
-   * Check if gyro permission is needed (iOS 13+ requires explicit permission)
+   * Check if this device requires gyro permission (iOS 13+)
    */
-  private needsGyroPermission(): boolean {
-    // Skip if already granted
-    if (this.gyroPermissionGranted) return false;
-
+  private requiresGyroPermission(): boolean {
     // Check if it's a mobile device
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (!isMobile) {
-      this.gyroPermissionGranted = true; // PC doesn't need gyro
-      return false;
+      return false; // PC doesn't need gyro
     }
 
     // Check if DeviceOrientationEvent exists and requires permission (iOS 13+)
@@ -90,37 +91,89 @@ export class GameStateManager {
     }
 
     // Android and older iOS don't require explicit permission
-    this.gyroPermissionGranted = true;
     return false;
   }
 
   /**
-   * Show gyro permission overlay
+   * Setup gyro permission button on title screen
    */
-  private showGyroPermissionOverlay(): void {
-    const overlay = document.getElementById('gyro-permission-overlay');
-    const errorMsg = document.getElementById('gyro-error');
+  private setupGyroButton(): void {
+    const gyroButton = document.getElementById('gyro-button');
+    const gyroStatus = document.getElementById('gyro-status');
+    const startButton = document.getElementById('start-button');
 
-    if (!overlay) return;
+    if (!gyroButton) return;
 
-    overlay.style.display = 'flex';
-    if (errorMsg) errorMsg.style.display = 'none';
+    // Check if it's a mobile device
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    // Set up global callback for gyro permission
-    (window as any).__gyroPermissionCallback = async () => {
+    // PC: Hide gyro button, allow game start
+    if (!isMobile) {
+      gyroButton.style.display = 'none';
+      if (gyroStatus) gyroStatus.style.display = 'none';
+      this.gyroPermissionGranted = true;
+      return;
+    }
+
+    // Check if iOS requires permission (iOS 13+)
+    const requiresPermission = typeof (DeviceOrientationEvent as any).requestPermission === 'function';
+
+    // Android: Show button but don't block start
+    if (!requiresPermission) {
+      gyroButton.style.display = 'flex';
+      gyroButton.innerHTML = '<span class="gyro-icon">📱</span><span>ジャイロON</span>';
+      if (gyroStatus) {
+        gyroStatus.textContent = 'スマホを傾けて操作できます';
+        gyroStatus.style.color = '#00ffff';
+      }
+      this.gyroPermissionGranted = true;
+      return;
+    }
+
+    // iOS: Show gyro button and disable start button until permission granted
+    gyroButton.style.display = 'flex';
+    if (startButton) {
+      startButton.style.opacity = '0.5';
+      startButton.style.pointerEvents = 'none';
+    }
+    if (gyroStatus) {
+      gyroStatus.textContent = 'ゲームをプレイするにはジャイロの許可が必要です';
+      gyroStatus.style.color = '#ffff00';
+    }
+
+    // Set up global callback for gyro permission button
+    (window as any).__requestGyroPermission = async () => {
       try {
         const permission = await (DeviceOrientationEvent as any).requestPermission();
         if (permission === 'granted') {
           this.gyroPermissionGranted = true;
-          overlay.style.display = 'none';
-          // Start game after permission granted
-          this.showCountdownAndStart();
+
+          // Update UI
+          gyroButton.classList.add('enabled');
+          gyroButton.innerHTML = '<span class="gyro-icon">✓</span><span>ジャイロ許可済み</span>';
+
+          if (gyroStatus) {
+            gyroStatus.textContent = 'ジャイロが有効になりました！';
+            gyroStatus.style.color = '#00ff00';
+          }
+
+          // Enable start button
+          if (startButton) {
+            startButton.style.opacity = '1';
+            startButton.style.pointerEvents = 'auto';
+          }
         } else {
-          if (errorMsg) errorMsg.style.display = 'block';
+          if (gyroStatus) {
+            gyroStatus.textContent = '許可されませんでした。もう一度お試しください。';
+            gyroStatus.style.color = '#ff4444';
+          }
         }
       } catch (error) {
         console.error('Gyro permission error:', error);
-        if (errorMsg) errorMsg.style.display = 'block';
+        if (gyroStatus) {
+          gyroStatus.textContent = 'エラーが発生しました。もう一度お試しください。';
+          gyroStatus.style.color = '#ff4444';
+        }
       }
     };
   }
@@ -401,79 +454,4 @@ export class GameStateManager {
     document.exitPointerLock?.();
   }
 
-  private setupGyroButton(): void {
-    const gyroButton = document.getElementById('gyro-button');
-    const gyroStatus = document.getElementById('gyro-status');
-    const inputManager = InputManager.getInstance();
-
-    if (!gyroButton) return;
-
-    // Detect in-app browsers (LINE, Facebook, Instagram, Twitter, etc.)
-    const ua = navigator.userAgent;
-    const isInAppBrowser =
-      /\bLine\//i.test(ua) ||      // LINE app: "Line/12.0.0"
-      /\bFBAV\//i.test(ua) ||      // Facebook app
-      /\bFBAN\//i.test(ua) ||      // Facebook app
-      /\bInstagram/i.test(ua) ||   // Instagram app
-      /\bTwitter/i.test(ua);       // Twitter/X app
-
-    if (isInAppBrowser) {
-      gyroButton.setAttribute('disabled', 'true');
-      if (gyroStatus) {
-        gyroStatus.innerHTML = '外部ブラウザ（ex:Safari, Chrome）で<br>開いてください';
-      }
-      return;
-    }
-
-    // Check if gyro is available
-    if (!inputManager.isGyroAvailable()) {
-      gyroButton.setAttribute('disabled', 'true');
-      if (gyroStatus) {
-        gyroStatus.textContent = 'ジャイロセンサー非対応';
-      }
-      return;
-    }
-
-    // Check if running on HTTP (not HTTPS) - gyro won't work
-    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
-    if (!isSecure) {
-      if (gyroStatus) {
-        gyroStatus.textContent = 'HTTPS環境が必要です';
-      }
-    }
-
-    // Handle gyro request - simple approach
-    gyroButton.onclick = async () => {
-      if (inputManager.isGyroEnabled()) {
-        // Already enabled - recalibrate
-        inputManager.recalibrateGyro();
-        if (gyroStatus) {
-          gyroStatus.textContent = 'キャリブレーション完了';
-        }
-        return;
-      }
-
-      if (gyroStatus) {
-        gyroStatus.textContent = '許可をリクエスト中...';
-      }
-
-      const granted = await inputManager.requestGyroPermission();
-
-      if (granted) {
-        gyroButton.classList.add('enabled');
-        gyroButton.innerHTML = '<span class="gyro-icon">✓</span><span>ジャイロON</span>';
-        if (gyroStatus) {
-          gyroStatus.textContent = 'ジャイロセンサー有効';
-        }
-      } else {
-        if (gyroStatus) {
-          if (!isSecure) {
-            gyroStatus.textContent = 'HTTPS環境でのみ動作します';
-          } else {
-            gyroStatus.textContent = '設定からモーションを許可してください';
-          }
-        }
-      }
-    };
-  }
 }
