@@ -19,8 +19,8 @@ const SPAWN_CONFIG = {
   // Maximum enemies per spawn
   maxEnemiesPerSpawn: 5,
   // Distance in front of player to spawn
-  spawnDistanceMin: 80,
-  spawnDistanceMax: 150,
+  spawnDistanceMin: 40,
+  spawnDistanceMax: 100,
   // Horizontal spread
   xSpread: 60,
   // Vertical range

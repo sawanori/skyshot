@@ -186,9 +186,11 @@ export const infiniteGridManager = InfiniteGridManager.getInstance();
 
 /**
  * Creates the infinite neon grid floor
+ * NOTE: Disabled for sky-only background
  */
 export function createGridFloor(app: pc.Application): void {
-  infiniteGridManager.initialize(app);
+  // Grid floor disabled - flying in open sky
+  // infiniteGridManager.initialize(app);
 }
 
 /**

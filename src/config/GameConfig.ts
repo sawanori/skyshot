@@ -11,13 +11,15 @@ import * as pc from 'playcanvas';
 // Scene Configuration
 // ============================================================================
 export const SCENE_CONFIG = {
-  clearColor: new pc.Color(0.05, 0.05, 0.1),
-  ambientLight: new pc.Color(0.1, 0.1, 0.2),
+  // Sky blue gradient background
+  clearColor: new pc.Color(0.4, 0.7, 1.0),
+  ambientLight: new pc.Color(0.5, 0.6, 0.8),
   fog: {
     type: pc.FOG_LINEAR,
-    color: new pc.Color(0.05, 0.05, 0.1),
-    start: 50,
-    end: 200,
+    // Light blue/white fog for atmospheric depth
+    color: new pc.Color(0.7, 0.85, 1.0),
+    start: 200,
+    end: 500,
   },
 } as const;
 
@@ -61,20 +63,20 @@ export const GRID_CONFIG = {
 // ============================================================================
 export const ENEMY_CONFIG = {
   cubeSize: 2,
-  emissiveIntensity: 0.8,
-  hitFlashIntensity: 3,
+  emissiveIntensity: 1.5,
+  hitFlashIntensity: 4,
   hitFlashDuration: 100,
   colors: [
-    new pc.Color(1, 0, 1),     // Magenta
+    new pc.Color(1, 0, 0),     // Red (high contrast against blue sky)
     new pc.Color(1, 0, 0.5),   // Pink
-    new pc.Color(0.5, 0, 1),   // Purple
-    new pc.Color(1, 0.5, 0),   // Orange
-    new pc.Color(0, 1, 1),     // Cyan
-    new pc.Color(0, 1, 0.5),   // Teal
-    new pc.Color(1, 1, 0),     // Yellow
-    new pc.Color(0.5, 1, 0),   // Lime
-    new pc.Color(1, 0.3, 0.3), // Red
-    new pc.Color(0.3, 1, 0.3), // Green
+    new pc.Color(0.8, 0, 0.8), // Magenta
+    new pc.Color(1, 0.3, 0),   // Orange-Red
+    new pc.Color(0.6, 0, 1),   // Purple
+    new pc.Color(1, 0.8, 0),   // Gold/Yellow
+    new pc.Color(0.2, 0.2, 0.2), // Dark gray/black
+    new pc.Color(1, 0.5, 0.5), // Light Red
+    new pc.Color(0.5, 0, 0.5), // Dark Purple
+    new pc.Color(0.8, 0.4, 0), // Dark Orange
   ],
   waves: {
     wave1: { count: 5, xSpread: 30, yMin: 3, yMax: 18, zStart: -20, zRange: 30 },
