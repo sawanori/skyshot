@@ -299,8 +299,8 @@ export class WeaponSystem {
     // Distance from closest point to entity center
     const distToCenter = closestPoint.distance(entityPos);
 
-    // Check if within bounding sphere
-    if (distToCenter <= halfSize * 1.5) {
+    // Check if within bounding sphere (increased hit radius for better gameplay)
+    if (distToCenter <= halfSize * 2.5) {
       return {
         point: closestPoint,
         distance: projLength
