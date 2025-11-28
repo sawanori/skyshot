@@ -593,18 +593,24 @@ export class GameManager {
    * Fetch and display player stats on the title screen.
    */
   public async refreshPlayerStats(): Promise<void> {
+    console.log('[GameManager] refreshPlayerStats called');
+
     // Only show stats if user is authenticated and not anonymous
     if (!this.authManager.isAuthenticated()) {
+      console.log('[GameManager] User not authenticated, hiding stats');
       this.hidePlayerStats();
       return;
     }
 
     try {
       // Fetch game history
+      console.log('[GameManager] Fetching game history...');
       const history = await this.leaderboardManager.getGameHistory(100);
+      console.log('[GameManager] Game history fetched:', history.length, 'entries');
 
       if (history.length === 0) {
         // User has no play history
+        console.log('[GameManager] No history, hiding stats');
         this.hidePlayerStats();
         return;
       }
@@ -616,6 +622,8 @@ export class GameManager {
 
       // Format last played date
       const lastPlayedStr = this.formatDate(lastPlayed);
+
+      console.log('[GameManager] Calculated stats:', { highScore, totalPlays, lastPlayedStr });
 
       // Update UI
       this.showPlayerStats(highScore, totalPlays, lastPlayedStr);
@@ -629,6 +637,8 @@ export class GameManager {
    * Show player stats on title screen.
    */
   private showPlayerStats(highScore: number, totalPlays: number, lastPlayed: string): void {
+    console.log('[GameManager] showPlayerStats called:', { highScore, totalPlays, lastPlayed });
+
     if (this.playerStatsContainer) {
       this.playerStatsContainer.style.display = 'block';
     }
@@ -636,15 +646,21 @@ export class GameManager {
     if (this.playerHighScore) {
       this.playerHighScore.textContent = highScore.toString().padStart(5, '0');
       this.playerHighScore.classList.add('highlight');
+      // Force reflow to ensure UI update
+      void this.playerHighScore.offsetHeight;
     }
 
     if (this.playerTotalPlays) {
       this.playerTotalPlays.textContent = totalPlays.toString();
+      void this.playerTotalPlays.offsetHeight;
     }
 
     if (this.playerLastPlayed) {
       this.playerLastPlayed.textContent = lastPlayed;
+      void this.playerLastPlayed.offsetHeight;
     }
+
+    console.log('[GameManager] Player stats UI updated');
   }
 
   /**
