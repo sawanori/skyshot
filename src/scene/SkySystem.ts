@@ -112,7 +112,7 @@ class SkySystemManager {
   }
 
   /**
-   * Create the sky gradient dome
+   * Create the sky dome with image texture
    */
   private createSkyGradient(): void {
     if (!this.app) return;
@@ -121,13 +121,35 @@ class SkySystemManager {
     this.skyDome = new pc.Entity('SkyDome');
     this.skyDome.addComponent('render', { type: 'sphere' });
 
-    // Create sky material with emissive gradient
+    // Create sky material with image texture
     const skyMaterial = new pc.StandardMaterial();
     skyMaterial.diffuse = new pc.Color(0, 0, 0);
-    skyMaterial.emissive = SKY_CONFIG.skyColors.horizon;
-    skyMaterial.emissiveIntensity = 1.0;
     skyMaterial.cull = pc.CULLFACE_FRONT; // Render inside of sphere
     skyMaterial.depthWrite = false;
+
+    // Load sky texture
+    const skyTexture = new pc.Texture(this.app.graphicsDevice, {
+      mipmaps: false,
+      minFilter: pc.FILTER_LINEAR,
+      magFilter: pc.FILTER_LINEAR,
+      addressU: pc.ADDRESS_REPEAT,
+      addressV: pc.ADDRESS_CLAMP_TO_EDGE
+    });
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      skyTexture.setSource(img);
+      skyMaterial.emissiveMap = skyTexture;
+      skyMaterial.emissive = new pc.Color(1, 1, 1);
+      skyMaterial.emissiveIntensity = 1.0;
+      skyMaterial.update();
+    };
+    img.src = 'assets/sky.jpg';
+
+    // Set initial emissive while loading
+    skyMaterial.emissive = SKY_CONFIG.skyColors.horizon;
+    skyMaterial.emissiveIntensity = 1.0;
     skyMaterial.update();
 
     if (this.skyDome.render) {
