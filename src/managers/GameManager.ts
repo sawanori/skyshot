@@ -13,6 +13,7 @@ import { AuthManager } from './AuthManager';
 import { LeaderboardManager, LeaderboardEntry } from './LeaderboardManager';
 import { AuthUI } from '../ui/AuthUI';
 import { UserHistoryUI } from '../ui/UserHistoryUI';
+import { GameStateManager } from './GameStateManager';
 
 export type GameState = 'loading' | 'menu' | 'playing' | 'paused' | 'gameover';
 
@@ -119,10 +120,11 @@ export class GameManager {
       this.scoreAttackUI.style.display = 'none';
     }
 
-    // Add retry button click listener
+    // Add retry button click listener - use GameStateManager for proper countdown
     if (this.retryButton) {
       this.retryButton.addEventListener('click', () => {
-        this.gameStart();
+        // Use GameStateManager to restart with countdown
+        GameStateManager.getInstance().restartGame();
       });
     }
 

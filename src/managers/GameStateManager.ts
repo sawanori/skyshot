@@ -58,7 +58,30 @@ export class GameStateManager {
 
   public startGame(): void {
     if (this._state !== GameState.Title) return;
+    this.showCountdownAndStart();
+  }
 
+  /**
+   * Restart game from game over state (called by retry button)
+   */
+  public restartGame(): void {
+    // Hide result screen
+    const resultScreen = document.getElementById('result-screen');
+    if (resultScreen) {
+      resultScreen.style.display = 'none';
+    }
+
+    // Set state to title temporarily to allow countdown
+    this._state = GameState.Title;
+
+    // Show countdown and start
+    this.showCountdownAndStart();
+  }
+
+  /**
+   * Show countdown overlay and start game after countdown
+   */
+  private showCountdownAndStart(): void {
     // Hide title screen and show countdown
     const titleScreen = document.getElementById('title-screen');
     const countdownOverlay = document.getElementById('countdown-overlay');
