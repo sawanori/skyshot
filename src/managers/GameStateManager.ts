@@ -22,6 +22,8 @@ export class GameStateManager {
   private _state: GameState = GameState.Title;
   private _gameStartTime: number = 0;
   private app: pc.Application | null = null;
+  private gyroPermissionGranted: boolean = false;
+  private pendingStartAfterGyro: boolean = false;
 
   private constructor() {}
 
@@ -58,7 +60,73 @@ export class GameStateManager {
 
   public startGame(): void {
     if (this._state !== GameState.Title) return;
+
+    // Check if we need gyro permission (mobile devices only)
+    if (this.needsGyroPermission()) {
+      this.showGyroPermissionOverlay();
+      return;
+    }
+
     this.showCountdownAndStart();
+  }
+
+  /**
+   * Check if gyro permission is needed (iOS 13+ requires explicit permission)
+   */
+  private needsGyroPermission(): boolean {
+    // Skip if already granted
+    if (this.gyroPermissionGranted) return false;
+
+    // Check if it's a mobile device
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (!isMobile) {
+      this.gyroPermissionGranted = true; // PC doesn't need gyro
+      return false;
+    }
+
+    // Check if DeviceOrientationEvent exists and requires permission (iOS 13+)
+    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+      return true;
+    }
+
+    // Android and older iOS don't require explicit permission
+    this.gyroPermissionGranted = true;
+    return false;
+  }
+
+  /**
+   * Show gyro permission overlay
+   */
+  private showGyroPermissionOverlay(): void {
+    const overlay = document.getElementById('gyro-permission-overlay');
+    const permissionBtn = document.getElementById('gyro-permission-btn');
+    const errorMsg = document.getElementById('gyro-error');
+
+    if (!overlay || !permissionBtn) return;
+
+    overlay.style.display = 'flex';
+    if (errorMsg) errorMsg.style.display = 'none';
+
+    // Remove previous listener to avoid duplicates
+    const newBtn = permissionBtn.cloneNode(true) as HTMLElement;
+    permissionBtn.parentNode?.replaceChild(newBtn, permissionBtn);
+
+    newBtn.addEventListener('click', async () => {
+      try {
+        const permission = await (DeviceOrientationEvent as any).requestPermission();
+        if (permission === 'granted') {
+          this.gyroPermissionGranted = true;
+          overlay.style.display = 'none';
+          // Start game after permission granted
+          this.showCountdownAndStart();
+        } else {
+          if (errorMsg) errorMsg.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Gyro permission error:', error);
+        if (errorMsg) errorMsg.style.display = 'block';
+      }
+    });
   }
 
   /**
