@@ -59,15 +59,115 @@ export class GameStateManager {
   public startGame(): void {
     if (this._state !== GameState.Title) return;
 
-    this._state = GameState.Playing;
-    this._gameStartTime = Date.now();
-
+    // Hide title screen and show countdown
     const titleScreen = document.getElementById('title-screen');
-    const hud = document.getElementById('hud');
+    const countdownOverlay = document.getElementById('countdown-overlay');
+    const countdownNumber = document.getElementById('countdown-number');
+    const countdownText = document.getElementById('countdown-text');
+    const progressBar = document.getElementById('countdown-progress-bar');
+    const particlesContainer = document.getElementById('countdown-particles');
 
     if (titleScreen) {
       titleScreen.classList.add('hidden');
     }
+
+    if (countdownOverlay) {
+      countdownOverlay.style.display = 'flex';
+    }
+
+    // Create floating particles
+    this.createCountdownParticles(particlesContainer);
+
+    // Start 5 second countdown
+    const totalSeconds = 5;
+    let count = totalSeconds;
+
+    if (countdownNumber) {
+      countdownNumber.textContent = count.toString();
+      countdownNumber.classList.remove('go-state');
+    }
+    if (countdownText) {
+      countdownText.textContent = 'LAUNCHING';
+    }
+    if (progressBar) {
+      progressBar.style.width = '0%';
+    }
+
+    const countdownInterval = setInterval(() => {
+      count--;
+
+      // Update progress bar
+      if (progressBar) {
+        const progress = ((totalSeconds - count) / totalSeconds) * 100;
+        progressBar.style.width = `${progress}%`;
+      }
+
+      if (countdownNumber) {
+        if (count > 0) {
+          countdownNumber.textContent = count.toString();
+
+          // Update text based on count
+          if (countdownText) {
+            if (count === 4) countdownText.textContent = 'SYSTEMS CHECK';
+            else if (count === 3) countdownText.textContent = 'ENGINES READY';
+            else if (count === 2) countdownText.textContent = 'WEAPONS HOT';
+            else if (count === 1) countdownText.textContent = 'STANDBY';
+          }
+        } else {
+          countdownNumber.textContent = 'GO!';
+          countdownNumber.classList.add('go-state');
+          if (countdownText) {
+            countdownText.textContent = 'ENGAGE';
+          }
+        }
+      }
+
+      if (count <= 0) {
+        clearInterval(countdownInterval);
+
+        // Hide countdown after a brief delay
+        setTimeout(() => {
+          if (countdownOverlay) {
+            countdownOverlay.style.display = 'none';
+          }
+          // Reset countdown style for next time
+          if (countdownNumber) {
+            countdownNumber.classList.remove('go-state');
+          }
+          // Clear particles
+          if (particlesContainer) {
+            particlesContainer.innerHTML = '';
+          }
+
+          // Actually start the game
+          this.actuallyStartGame();
+        }, 500);
+      }
+    }, 1000);
+  }
+
+  private createCountdownParticles(container: HTMLElement | null): void {
+    if (!container) return;
+
+    // Clear existing particles
+    container.innerHTML = '';
+
+    // Create 20 floating particles
+    for (let i = 0; i < 20; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.animationDelay = `${Math.random() * 3}s`;
+      particle.style.animationDuration = `${2 + Math.random() * 2}s`;
+      container.appendChild(particle);
+    }
+  }
+
+  private actuallyStartGame(): void {
+    this._state = GameState.Playing;
+    this._gameStartTime = Date.now();
+
+    const hud = document.getElementById('hud');
 
     if (hud) {
       hud.style.display = 'block';

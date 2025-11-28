@@ -162,6 +162,302 @@
       96% { opacity: 1; }
     }
 
+    /* ========== CINEMATIC COUNTDOWN OVERLAY ========== */
+    #countdown-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at center, rgba(0,20,40,0.85) 0%, rgba(0,0,0,0.95) 100%);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    /* Animated background grid */
+    #countdown-overlay::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 200%;
+      height: 200%;
+      background-image:
+        linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: grid-scroll 20s linear infinite;
+      transform: perspective(500px) rotateX(60deg);
+      transform-origin: center top;
+    }
+
+    @keyframes grid-scroll {
+      0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+      100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+    }
+
+    /* Scanning line effect */
+    #countdown-overlay::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, rgba(0,255,255,0.8), transparent);
+      animation: scan-line 2s linear infinite;
+      box-shadow: 0 0 20px rgba(0,255,255,0.5), 0 0 40px rgba(0,255,255,0.3);
+    }
+
+    @keyframes scan-line {
+      0% { top: 0; opacity: 1; }
+      100% { top: 100%; opacity: 0.3; }
+    }
+
+    /* Central countdown container */
+    .countdown-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 2;
+    }
+
+    /* Hexagonal frame around number */
+    .countdown-frame {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .countdown-frame::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 2px solid rgba(0,255,255,0.4);
+      border-radius: 50%;
+      animation: frame-rotate 10s linear infinite;
+      box-shadow: 0 0 30px rgba(0,255,255,0.2), inset 0 0 30px rgba(0,255,255,0.1);
+    }
+
+    .countdown-frame::after {
+      content: '';
+      position: absolute;
+      width: 85%;
+      height: 85%;
+      border: 1px solid rgba(0,255,255,0.6);
+      border-radius: 50%;
+      animation: frame-rotate 8s linear infinite reverse;
+    }
+
+    @keyframes frame-rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Corner brackets */
+    .corner-bracket {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-color: #0ff;
+      border-style: solid;
+      border-width: 0;
+    }
+    .corner-bracket.tl { top: 10%; left: 10%; border-top-width: 2px; border-left-width: 2px; }
+    .corner-bracket.tr { top: 10%; right: 10%; border-top-width: 2px; border-right-width: 2px; }
+    .corner-bracket.bl { bottom: 10%; left: 10%; border-bottom-width: 2px; border-left-width: 2px; }
+    .corner-bracket.br { bottom: 10%; right: 10%; border-bottom-width: 2px; border-right-width: 2px; }
+
+    /* Main countdown number */
+    #countdown-number {
+      font-family: 'Orbitron', monospace;
+      font-size: 140px;
+      font-weight: 900;
+      color: #fff;
+      text-shadow:
+        0 0 10px #0ff,
+        0 0 20px #0ff,
+        0 0 40px #0ff,
+        0 0 80px #0ff,
+        0 0 120px rgba(0,255,255,0.5);
+      animation: number-pulse 1s ease-in-out infinite;
+      position: relative;
+      z-index: 3;
+    }
+
+    #countdown-number.go-state {
+      color: #0f0;
+      text-shadow:
+        0 0 10px #0f0,
+        0 0 20px #0f0,
+        0 0 40px #0f0,
+        0 0 80px #0f0,
+        0 0 120px rgba(0,255,0,0.5);
+      animation: go-burst 0.5s ease-out;
+    }
+
+    @keyframes number-pulse {
+      0%, 100% { transform: scale(1); filter: brightness(1); }
+      50% { transform: scale(1.05); filter: brightness(1.2); }
+    }
+
+    @keyframes go-burst {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Status text */
+    #countdown-text {
+      font-family: 'Orbitron', monospace;
+      font-size: 18px;
+      color: rgba(0,255,255,0.9);
+      text-shadow: 0 0 10px rgba(0,255,255,0.5);
+      margin-top: 30px;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      position: relative;
+    }
+
+    #countdown-text::before,
+    #countdown-text::after {
+      content: '◆';
+      margin: 0 15px;
+      font-size: 10px;
+      vertical-align: middle;
+      animation: diamond-pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes diamond-pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    /* Progress bar */
+    .countdown-progress {
+      position: absolute;
+      bottom: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      max-width: 300px;
+      height: 4px;
+      background: rgba(0,255,255,0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .countdown-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #0ff, #0f0);
+      box-shadow: 0 0 10px #0ff, 0 0 20px rgba(0,255,255,0.5);
+      transition: width 1s linear;
+      width: 0%;
+    }
+
+    /* Side data panels */
+    .countdown-side-data {
+      position: absolute;
+      font-family: 'Orbitron', monospace;
+      font-size: 10px;
+      color: rgba(0,255,255,0.6);
+      letter-spacing: 2px;
+    }
+
+    .countdown-side-data.left {
+      left: 5%;
+      top: 50%;
+      transform: translateY(-50%);
+      text-align: left;
+    }
+
+    .countdown-side-data.right {
+      right: 5%;
+      top: 50%;
+      transform: translateY(-50%);
+      text-align: right;
+    }
+
+    .countdown-side-data div {
+      margin: 8px 0;
+      opacity: 0.7;
+    }
+
+    .countdown-side-data .label {
+      color: rgba(0,255,255,0.4);
+      font-size: 8px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .countdown-side-data .value {
+      color: #0ff;
+    }
+
+    /* Top status bar */
+    .countdown-top-status {
+      position: absolute;
+      top: 8%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Orbitron', monospace;
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      letter-spacing: 4px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #0f0;
+      border-radius: 50%;
+      animation: status-blink 1s ease-in-out infinite;
+      box-shadow: 0 0 10px #0f0;
+    }
+
+    @keyframes status-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Particle effects container */
+    .countdown-particles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: #0ff;
+      border-radius: 50%;
+      animation: particle-float 3s linear infinite;
+      box-shadow: 0 0 6px #0ff;
+    }
+
+    @keyframes particle-float {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+    }
+
     /* HUD elements placeholder */
     #hud {
       position: absolute;
@@ -2100,6 +2396,67 @@
           onmouseout="this.style.background='transparent'; this.style.boxShadow='0 0 15px rgba(255,255,0,0.2)';">
           RETRY
         </button>
+      </div>
+    </div>
+
+    <!-- Countdown overlay -->
+    <div id="countdown-overlay">
+      <!-- Floating particles -->
+      <div class="countdown-particles" id="countdown-particles"></div>
+
+      <!-- Top status -->
+      <div class="countdown-top-status">
+        <span class="status-dot"></span>
+        <span>SYSTEM INITIALIZED</span>
+      </div>
+
+      <!-- Left side data -->
+      <div class="countdown-side-data left">
+        <div>
+          <span class="label">MODE</span>
+          <span class="value">SCORE ATTACK</span>
+        </div>
+        <div>
+          <span class="label">DIFFICULTY</span>
+          <span class="value">STANDARD</span>
+        </div>
+        <div>
+          <span class="label">TIME LIMIT</span>
+          <span class="value">60.00 SEC</span>
+        </div>
+      </div>
+
+      <!-- Right side data -->
+      <div class="countdown-side-data right">
+        <div>
+          <span class="label">WEAPONS</span>
+          <span class="value">ONLINE</span>
+        </div>
+        <div>
+          <span class="label">RADAR</span>
+          <span class="value">ACTIVE</span>
+        </div>
+        <div>
+          <span class="label">TARGETS</span>
+          <span class="value">DETECTED</span>
+        </div>
+      </div>
+
+      <!-- Central countdown -->
+      <div class="countdown-container">
+        <div class="countdown-frame">
+          <div class="corner-bracket tl"></div>
+          <div class="corner-bracket tr"></div>
+          <div class="corner-bracket bl"></div>
+          <div class="corner-bracket br"></div>
+          <div id="countdown-number">5</div>
+        </div>
+        <div id="countdown-text">LAUNCHING</div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="countdown-progress">
+        <div class="countdown-progress-bar" id="countdown-progress-bar"></div>
       </div>
     </div>
 

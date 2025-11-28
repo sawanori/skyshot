@@ -11,15 +11,15 @@ import * as pc from 'playcanvas';
 // Scene Configuration
 // ============================================================================
 export const SCENE_CONFIG = {
-  // Sky blue gradient background
-  clearColor: new pc.Color(0.4, 0.7, 1.0),
-  ambientLight: new pc.Color(0.5, 0.6, 0.8),
+  // Deep azure sky gradient background
+  clearColor: new pc.Color(0.15, 0.35, 0.65),
+  ambientLight: new pc.Color(0.6, 0.7, 0.85),
   fog: {
     type: pc.FOG_LINEAR,
-    // Light blue/white fog for atmospheric depth
-    color: new pc.Color(0.7, 0.85, 1.0),
-    start: 200,
-    end: 500,
+    // Atmospheric haze - light blue fading to white at horizon
+    color: new pc.Color(0.6, 0.75, 0.95),
+    start: 250,
+    end: 600,
   },
 } as const;
 
