@@ -3051,7 +3051,10 @@
         ジャイロセンサーの使用を許可してください。
       </p>
 
-      <button id="gyro-permission-btn" style="
+      <button id="gyro-permission-btn"
+        onclick="if(window.__gyroPermissionCallback) window.__gyroPermissionCallback();"
+        ontouchend="event.preventDefault(); if(window.__gyroPermissionCallback) window.__gyroPermissionCallback();"
+        style="
         padding: 16px 40px;
         background: linear-gradient(135deg, #00ffff 0%, #00aaff 100%);
         border: none;

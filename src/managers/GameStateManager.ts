@@ -99,19 +99,15 @@ export class GameStateManager {
    */
   private showGyroPermissionOverlay(): void {
     const overlay = document.getElementById('gyro-permission-overlay');
-    const permissionBtn = document.getElementById('gyro-permission-btn');
     const errorMsg = document.getElementById('gyro-error');
 
-    if (!overlay || !permissionBtn) return;
+    if (!overlay) return;
 
     overlay.style.display = 'flex';
     if (errorMsg) errorMsg.style.display = 'none';
 
-    // Remove previous listener to avoid duplicates
-    const newBtn = permissionBtn.cloneNode(true) as HTMLElement;
-    permissionBtn.parentNode?.replaceChild(newBtn, permissionBtn);
-
-    newBtn.addEventListener('click', async () => {
+    // Set up global callback for gyro permission
+    (window as any).__gyroPermissionCallback = async () => {
       try {
         const permission = await (DeviceOrientationEvent as any).requestPermission();
         if (permission === 'granted') {
@@ -126,7 +122,7 @@ export class GameStateManager {
         console.error('Gyro permission error:', error);
         if (errorMsg) errorMsg.style.display = 'block';
       }
-    });
+    };
   }
 
   /**
