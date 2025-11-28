@@ -90,6 +90,7 @@ export class EnemyManager {
     this.clearAllEnemies();
     this.isActive = true;
     this.spawnTimer = 0;
+    this.elapsedTime = 0;
   }
 
   private onGameOver(): void {
