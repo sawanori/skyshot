@@ -158,7 +158,7 @@ class SkySystemManager {
 
     this.skyDome.setLocalScale(1000, 1000, 1000);
     this.skyDome.setPosition(0, 0, 0);
-    this.skyDome.setLocalEulerAngles(0, 0, 90); // Rotate 90° around Z-axis
+    this.skyDome.setLocalEulerAngles(0, 90, 0); // Rotate 90° around Y-axis
     this.app.root.addChild(this.skyDome);
   }
 
