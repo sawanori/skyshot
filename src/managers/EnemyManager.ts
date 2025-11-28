@@ -22,7 +22,7 @@ const SPAWN_CONFIG = {
   xSpread: 60,
   yMin: 5,
   yMax: 35,
-  enemySpeed: 25,
+  enemySpeed: 12,
   despawnDistance: 30,
   maxActiveEnemies: 50,
 };
