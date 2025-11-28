@@ -2984,19 +2984,35 @@
         </p>
       </div>
 
-      <!-- Copy URL button -->
-      <button id="copy-url-btn" style="
-        padding: 14px 30px;
-        background: transparent;
-        border: 2px solid #00ffff;
-        color: #00ffff;
+      <!-- Open in external browser button -->
+      <button id="open-external-btn" style="
+        padding: 16px 30px;
+        background: linear-gradient(135deg, #00ffff 0%, #00aaff 100%);
+        border: none;
+        color: #000;
         font-family: 'Courier New', monospace;
-        font-size: 14px;
+        font-size: 16px;
+        font-weight: bold;
         cursor: pointer;
         margin-bottom: 15px;
         transition: all 0.3s;
-        text-shadow: 0 0 5px #00ffff;
-      " onmouseover="this.style.background='rgba(0,255,255,0.15)'" onmouseout="this.style.background='transparent'">
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+      ">
+        外部ブラウザで開く
+      </button>
+
+      <!-- Copy URL button -->
+      <button id="copy-url-btn" style="
+        padding: 12px 25px;
+        background: transparent;
+        border: 2px solid #666;
+        color: #888;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        cursor: pointer;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+      " onmouseover="this.style.borderColor='#00ffff'; this.style.color='#00ffff';" onmouseout="this.style.borderColor='#666'; this.style.color='#888';">
         URLをコピー
       </button>
 
@@ -3006,6 +3022,14 @@
         color: #00ff00;
         margin-top: 10px;
       ">✓ コピーしました！ブラウザに貼り付けてください</p>
+
+      <p id="external-note" style="
+        display: none;
+        font-size: 11px;
+        color: #ff8800;
+        margin-top: 10px;
+        line-height: 1.5;
+      "></p>
     </div>
   </div>
 
@@ -3112,8 +3136,10 @@
         const overlay = document.getElementById('sns-browser-overlay');
         const iosInstructions = document.getElementById('ios-instructions');
         const androidInstructions = document.getElementById('android-instructions');
+        const openExternalBtn = document.getElementById('open-external-btn');
         const copyBtn = document.getElementById('copy-url-btn');
         const copySuccess = document.getElementById('copy-success');
+        const externalNote = document.getElementById('external-note');
 
         // Show overlay
         overlay.style.display = 'flex';
@@ -3127,6 +3153,60 @@
         } else if (isAndroid) {
           androidInstructions.style.display = 'block';
         }
+
+        // Open external browser button handler
+        openExternalBtn.addEventListener('click', function() {
+          const currentUrl = window.location.href;
+
+          // LINE: Use openExternalBrowser parameter
+          if (isLine) {
+            const separator = currentUrl.includes('?') ? '&' : '?';
+            const lineUrl = currentUrl + separator + 'openExternalBrowser=1';
+            window.location.href = lineUrl;
+            return;
+          }
+
+          // Android: Try intent scheme for Chrome
+          if (isAndroid) {
+            try {
+              const intentUrl = 'intent://' + currentUrl.replace(/^https?:\/\//, '') +
+                '#Intent;scheme=https;package=com.android.chrome;end';
+              window.location.href = intentUrl;
+
+              // If intent fails, show note after delay
+              setTimeout(function() {
+                if (externalNote) {
+                  externalNote.textContent = 'ブラウザが開かない場合は「URLをコピー」してChromeに貼り付けてください';
+                  externalNote.style.display = 'block';
+                }
+              }, 2000);
+              return;
+            } catch (e) {
+              // Fallback to copy
+            }
+          }
+
+          // iOS (Instagram/Facebook/etc): Cannot auto-open, show instructions
+          if (isIOS) {
+            if (externalNote) {
+              externalNote.innerHTML = 'iOSでは自動で開けません。<br>下の「URLをコピー」をタップして<br>Safariに貼り付けてください。';
+              externalNote.style.display = 'block';
+            }
+            // Auto copy URL
+            fallbackCopy(currentUrl);
+            copySuccess.style.display = 'block';
+            return;
+          }
+
+          // Fallback: Try window.open
+          const newWindow = window.open(currentUrl, '_system');
+          if (!newWindow) {
+            if (externalNote) {
+              externalNote.textContent = '開けませんでした。「URLをコピー」してブラウザに貼り付けてください。';
+              externalNote.style.display = 'block';
+            }
+          }
+        });
 
         // Copy URL button handler
         copyBtn.addEventListener('click', function() {
