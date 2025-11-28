@@ -144,8 +144,11 @@ export class GameStateManager {
     // Set up global callback for gyro permission button
     (window as any).__requestGyroPermission = async () => {
       try {
-        const permission = await (DeviceOrientationEvent as any).requestPermission();
-        if (permission === 'granted') {
+        // Use InputManager to request permission and enable gyro
+        const inputManager = InputManager.getInstance();
+        const granted = await inputManager.requestGyroPermission();
+
+        if (granted) {
           this.gyroPermissionGranted = true;
 
           // Update UI
