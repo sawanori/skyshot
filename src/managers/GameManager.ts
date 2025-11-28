@@ -596,15 +596,18 @@ export class GameManager {
     // Hide in-game high score
     this.hideInGameHighScore();
 
-    // Show title screen
+    // Show title screen using classList (consistent with GameStateManager)
     const titleScreen = document.getElementById('title-screen');
     if (titleScreen) {
-      titleScreen.style.display = 'flex';
+      titleScreen.classList.remove('hidden');
     }
 
     // Reset game state
     this.state = 'menu';
     this.isPlaying = false;
+
+    // Use GameStateManager to properly reset state
+    GameStateManager.getInstance().quitToTitle();
 
     // Fire event to reset game world (clear enemies, reset player position, etc.)
     if (this._app) {
