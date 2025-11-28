@@ -48,6 +48,7 @@ export class GameManager {
   private resultScreen: HTMLElement | null = null;
   private finalScoreDisplay: HTMLElement | null = null;
   private retryButton: HTMLElement | null = null;
+  private endButton: HTMLElement | null = null;
   private scoreAttackUI: HTMLElement | null = null;
 
   // Leaderboard DOM elements
@@ -97,6 +98,7 @@ export class GameManager {
     this.resultScreen = document.getElementById('result-screen');
     this.finalScoreDisplay = document.getElementById('final-score');
     this.retryButton = document.getElementById('retry-btn');
+    this.endButton = document.getElementById('end-btn');
     this.scoreAttackUI = document.getElementById('score-attack-ui');
 
     // Get DOM elements for Leaderboard UI
@@ -125,6 +127,13 @@ export class GameManager {
       this.retryButton.addEventListener('click', () => {
         // Use GameStateManager to restart with countdown
         GameStateManager.getInstance().restartGame();
+      });
+    }
+
+    // Add end button click listener - return to title screen
+    if (this.endButton) {
+      this.endButton.addEventListener('click', () => {
+        this.returnToTitle();
       });
     }
 
@@ -568,6 +577,42 @@ export class GameManager {
 
   public endGame(): void {
     this.gameFinish();
+  }
+
+  /**
+   * Return to title screen from result screen
+   */
+  public returnToTitle(): void {
+    // Hide result screen
+    if (this.resultScreen) {
+      this.resultScreen.style.display = 'none';
+    }
+
+    // Hide score attack UI
+    if (this.scoreAttackUI) {
+      this.scoreAttackUI.style.display = 'none';
+    }
+
+    // Hide in-game high score
+    this.hideInGameHighScore();
+
+    // Show title screen
+    const titleScreen = document.getElementById('title-screen');
+    if (titleScreen) {
+      titleScreen.style.display = 'flex';
+    }
+
+    // Reset game state
+    this.state = 'menu';
+    this.isPlaying = false;
+
+    // Fire event to reset game world (clear enemies, reset player position, etc.)
+    if (this._app) {
+      this._app.fire('game:reset');
+    }
+
+    // Refresh player stats on title screen
+    this.refreshPlayerStats();
   }
 
   public getCurrentTime(): number {
