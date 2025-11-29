@@ -148,7 +148,7 @@ export class Radar3DSystem {
 
     // Load GLB model
     const asset = new pc.Asset('radar', 'container', {
-      url: 'assets/rader.glb'
+      url: 'assets/rader-1.glb'
     });
 
     asset.on('load', () => {
