@@ -13,7 +13,6 @@ import { HUDManager } from './ui/HUDManager';
 import { createGridFloor, createDirectionalLight, configureSceneEnvironment, setGridPlayer } from './scene/SceneSetup';
 import { createSkySystem, setSkyPlayer } from './scene/SkySystem';
 import { EnemyManager } from './managers/EnemyManager';
-import { Radar3DSystem } from './ui/Radar3DSystem';
 import { SCENE_CONFIG, CAMERA_CONFIG, PLAYER_CONFIG } from './config/GameConfig';
 
 // Global app reference
@@ -24,7 +23,6 @@ let hudManager: HUDManager;
 let gameStateManager: GameStateManager;
 let gameManager: GameManager;
 let enemyManager: EnemyManager;
-let radar3DSystem: Radar3DSystem;
 
 // Player controller reference for HUD updates
 let playerControllerRef: PlayerController | null = null;
@@ -114,11 +112,6 @@ function setupUpdateLoop(): void {
       // Update EnemyManager for infinite enemy spawning
       enemyManager.update(dt);
 
-      // Update 3D Radar
-      if (radar3DSystem) {
-        radar3DSystem.update();
-      }
-
       if (playerControllerRef) {
         hudManager.setGameStartTime(gameStateManager.gameStartTime);
         hudManager.update({
@@ -152,9 +145,6 @@ function setupScene(): void {
   // Initialize EnemyManager with player reference for infinite spawn system
   enemyManager = EnemyManager.getInstance();
   enemyManager.initialize(app, camera);
-
-  // Initialize 3D Radar System
-  radar3DSystem = new Radar3DSystem(app, camera);
 }
 
 /**

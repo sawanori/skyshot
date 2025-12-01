@@ -10,6 +10,7 @@
 
 import * as pc from 'playcanvas';
 import { InputManager } from '../managers/InputManager';
+import { RADAR_CONFIG } from '../config/GameConfig';
 
 interface HUDElements {
   altitudePointer: HTMLElement | null;
@@ -20,6 +21,7 @@ interface HUDElements {
   headingValue: HTMLElement | null;
   pitchValue: HTMLElement | null;
   targetCount: HTMLElement | null;
+  radarBlips: HTMLElement | null;
   fpsDisplay: HTMLElement | null;
   timeDisplay: HTMLElement | null;
 }
@@ -49,6 +51,7 @@ export class HUDManager {
       headingValue: null,
       pitchValue: null,
       targetCount: null,
+      radarBlips: null,
       fpsDisplay: null,
       timeDisplay: null,
     };
@@ -67,6 +70,7 @@ export class HUDManager {
     this.elements.headingValue = document.getElementById('heading-value');
     this.elements.pitchValue = document.getElementById('pitch-value');
     this.elements.targetCount = document.getElementById('target-count');
+    this.elements.radarBlips = document.getElementById('radar-blips');
     this.elements.fpsDisplay = document.getElementById('fps-display');
     this.elements.timeDisplay = document.getElementById('time-display');
   }
@@ -93,7 +97,7 @@ export class HUDManager {
     this.updateHeading(playerState.yaw);
     this.updatePitch(playerState.pitch);
     this.updateTargetCount();
-    // 3D Radar is now handled by Radar3DSystem
+    this.updateRadarBlips(playerState.position, playerState.yaw);
   }
 
   private updateFPS(): void {
@@ -170,5 +174,39 @@ export class HUDManager {
     if (this.elements.targetCount) {
       this.elements.targetCount.textContent = String(enemies.length);
     }
+  }
+
+  private updateRadarBlips(playerPos: pc.Vec3, playerYaw: number): void {
+    if (!this.elements.radarBlips) return;
+
+    this.elements.radarBlips.innerHTML = '';
+
+    const enemies = this.app.root.findByTag('Enemy');
+    const radarRange = RADAR_CONFIG.maxDistance / 3; // Scale for radar display
+
+    enemies.forEach((enemy) => {
+      const enemyPos = enemy.getPosition();
+
+      const dx = enemyPos.x - playerPos.x;
+      const dz = enemyPos.z - playerPos.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+
+      if (distance > radarRange) return;
+
+      const yawRad = (playerYaw * Math.PI) / 180;
+      const rotatedX = dx * Math.cos(yawRad) - dz * Math.sin(yawRad);
+      const rotatedZ = dx * Math.sin(yawRad) + dz * Math.cos(yawRad);
+
+      const radarX = 50 + (rotatedX / radarRange) * 45;
+      const radarY = 50 - (rotatedZ / radarRange) * 45;
+
+      const blip = document.createElement('div');
+      blip.className = 'radar-blip';
+      blip.style.left = `${radarX}%`;
+      blip.style.top = `${radarY}%`;
+      blip.style.transform = 'translate(-50%, -50%)';
+
+      this.elements.radarBlips!.appendChild(blip);
+    });
   }
 }
