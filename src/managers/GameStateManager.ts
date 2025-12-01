@@ -118,69 +118,34 @@ export class GameStateManager {
     // Check if iOS requires permission (iOS 13+)
     const requiresPermission = typeof (DeviceOrientationEvent as any).requestPermission === 'function';
 
-    // Android: Show button, allow game start, but still need click handler to enable gyro
-    if (!requiresPermission) {
-      gyroButton.style.display = 'flex';
-      gyroButton.innerHTML = '<span class="gyro-icon">📱</span><span>ジャイロON</span>';
-      if (gyroStatus) {
-        gyroStatus.textContent = 'タップしてジャイロを有効にしてください';
-        gyroStatus.style.color = '#00ffff';
-      }
-      this.gyroPermissionGranted = true;
+    // Handler function for gyro permission request
+    const handleGyroRequest = async (event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-      // Set up click handler for Android to actually enable gyro
-      (window as any).__requestGyroPermission = async () => {
-        try {
-          const inputManager = InputManager.getInstance();
-          const granted = await inputManager.requestGyroPermission();
+      console.log('Gyro button tapped, requiresPermission:', requiresPermission);
 
-          if (granted) {
-            gyroButton.classList.add('enabled');
-            gyroButton.innerHTML = '<span class="gyro-icon">✓</span><span>ジャイロON</span>';
-            if (gyroStatus) {
-              gyroStatus.textContent = 'ジャイロが有効になりました！';
-              gyroStatus.style.color = '#00ff00';
-            }
-          }
-        } catch (error) {
-          console.error('Gyro enable error:', error);
-        }
-      };
-      return;
-    }
-
-    // iOS: Show gyro button and disable start button until permission granted
-    gyroButton.style.display = 'flex';
-    if (startButton) {
-      startButton.style.opacity = '0.5';
-      startButton.style.pointerEvents = 'none';
-    }
-    if (gyroStatus) {
-      gyroStatus.textContent = 'ゲームをプレイするにはジャイロの許可が必要です';
-      gyroStatus.style.color = '#ffff00';
-    }
-
-    // Set up global callback for gyro permission button (iOS)
-    (window as any).__requestGyroPermission = async () => {
       try {
-        // Use InputManager to request permission and enable gyro
         const inputManager = InputManager.getInstance();
         const granted = await inputManager.requestGyroPermission();
+        console.log('Gyro permission result:', granted);
 
         if (granted) {
-          this.gyroPermissionGranted = true;
+          if (requiresPermission) {
+            this.gyroPermissionGranted = true;
+          }
 
           // Update UI
           gyroButton.classList.add('enabled');
-          gyroButton.innerHTML = '<span class="gyro-icon">✓</span><span>ジャイロ許可済み</span>';
+          gyroButton.innerHTML = '<span class="gyro-icon">✓</span><span>ジャイロON</span>';
 
           if (gyroStatus) {
             gyroStatus.textContent = 'ジャイロが有効になりました！';
             gyroStatus.style.color = '#00ff00';
           }
 
-          // Enable start button
-          if (startButton) {
+          // Enable start button (iOS only disables it)
+          if (requiresPermission && startButton) {
             startButton.style.opacity = '1';
             startButton.style.pointerEvents = 'auto';
           }
@@ -198,6 +163,35 @@ export class GameStateManager {
         }
       }
     };
+
+    // Add event listeners - use touchstart for mobile (required for iOS permission)
+    // touchstart is crucial because iOS requires permission request in direct user gesture
+    gyroButton.addEventListener('touchstart', handleGyroRequest, { passive: false });
+    // Also add click for mouse fallback
+    gyroButton.addEventListener('click', handleGyroRequest);
+
+    // Android: Show button, allow game start
+    if (!requiresPermission) {
+      gyroButton.style.display = 'flex';
+      gyroButton.innerHTML = '<span class="gyro-icon">📱</span><span>ジャイロON</span>';
+      if (gyroStatus) {
+        gyroStatus.textContent = 'タップしてジャイロを有効にしてください';
+        gyroStatus.style.color = '#00ffff';
+      }
+      this.gyroPermissionGranted = true;
+      return;
+    }
+
+    // iOS: Show gyro button and disable start button until permission granted
+    gyroButton.style.display = 'flex';
+    if (startButton) {
+      startButton.style.opacity = '0.5';
+      startButton.style.pointerEvents = 'none';
+    }
+    if (gyroStatus) {
+      gyroStatus.textContent = 'ゲームをプレイするにはジャイロの許可が必要です';
+      gyroStatus.style.color = '#ffff00';
+    }
   }
 
   /**
