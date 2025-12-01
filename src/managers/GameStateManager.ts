@@ -118,15 +118,34 @@ export class GameStateManager {
     // Check if iOS requires permission (iOS 13+)
     const requiresPermission = typeof (DeviceOrientationEvent as any).requestPermission === 'function';
 
-    // Android: Show button but don't block start
+    // Android: Show button, allow game start, but still need click handler to enable gyro
     if (!requiresPermission) {
       gyroButton.style.display = 'flex';
       gyroButton.innerHTML = '<span class="gyro-icon">📱</span><span>ジャイロON</span>';
       if (gyroStatus) {
-        gyroStatus.textContent = 'スマホを傾けて操作できます';
+        gyroStatus.textContent = 'タップしてジャイロを有効にしてください';
         gyroStatus.style.color = '#00ffff';
       }
       this.gyroPermissionGranted = true;
+
+      // Set up click handler for Android to actually enable gyro
+      (window as any).__requestGyroPermission = async () => {
+        try {
+          const inputManager = InputManager.getInstance();
+          const granted = await inputManager.requestGyroPermission();
+
+          if (granted) {
+            gyroButton.classList.add('enabled');
+            gyroButton.innerHTML = '<span class="gyro-icon">✓</span><span>ジャイロON</span>';
+            if (gyroStatus) {
+              gyroStatus.textContent = 'ジャイロが有効になりました！';
+              gyroStatus.style.color = '#00ff00';
+            }
+          }
+        } catch (error) {
+          console.error('Gyro enable error:', error);
+        }
+      };
       return;
     }
 
@@ -141,7 +160,7 @@ export class GameStateManager {
       gyroStatus.style.color = '#ffff00';
     }
 
-    // Set up global callback for gyro permission button
+    // Set up global callback for gyro permission button (iOS)
     (window as any).__requestGyroPermission = async () => {
       try {
         // Use InputManager to request permission and enable gyro
