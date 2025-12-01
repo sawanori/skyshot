@@ -613,12 +613,12 @@ export class InputManager {
       }
     }
 
-    // Process control pad input (left side joystick for altitude/yaw)
+    // Process control pad input (left side joystick for strafe/altitude)
     if (this.controlPad && this.controlPad.isActive()) {
       // Vertical = altitude (up/down)
       this.inputState.altitudeInput = this.controlPad.getVertical();
-      // Horizontal = yaw rotation (left/right turn)
-      this.inputState.lookDelta.x += this.controlPad.getHorizontal() * 3.0; // Sensitivity multiplier
+      // Horizontal = left/right strafe movement
+      this.inputState.moveVector.x = this.controlPad.getHorizontal();
     }
   }
 
