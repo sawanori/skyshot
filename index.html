@@ -2290,25 +2290,24 @@
       z-index: 55;
     }
 
-    /* Altitude slider zone (right edge) */
+    /* Altitude slider zone (right edge) - DISABLED, replaced by left control pad */
     #altitude-zone {
+      display: none;
       position: absolute;
       top: 60px; /* Leave space for pause button */
       right: 0;
       width: 15%;
       height: calc(100% - 60px);
-      pointer-events: auto;
+      pointer-events: none;
       z-index: 55;
-      /* Debug: uncomment to see zone */
-      /* background: rgba(255, 0, 0, 0.2); */
     }
 
-    /* Camera control zone (remaining right area) */
+    /* Camera control zone (right area - expanded since altitude zone removed) */
     #camera-zone {
       position: absolute;
       top: 60px; /* Leave space for pause button */
-      right: 15%;
-      width: 45%;
+      right: 0;
+      width: 60%;
       height: calc(100% - 60px);
       pointer-events: auto;
       z-index: 55;

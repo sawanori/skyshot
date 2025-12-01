@@ -12,6 +12,7 @@
  */
 
 import * as pc from 'playcanvas';
+import { ControlPad } from '../ui/ControlPad';
 
 export interface InputState {
   /** Movement vector (XZ plane), range -1 to 1 */
@@ -82,6 +83,9 @@ export class InputManager {
   private gyroInitialAlpha: number | null = null;
   private gyroInitialBeta: number | null = null;
 
+  // Control pad (left side joystick for altitude/yaw)
+  private controlPad: ControlPad | null = null;
+
   private constructor() {
     this.inputState = {
       moveVector: new pc.Vec2(),
@@ -122,6 +126,14 @@ export class InputManager {
     this.setupMouseEvents();
     this.setupKeyboardEvents();
 
+    // Create control pad for mobile (altitude/yaw control)
+    if (this.isTouch) {
+      this.controlPad = new ControlPad({
+        size: 100,
+        innerSize: 50,
+        maxDistance: 35
+      });
+    }
   }
 
   /**
@@ -600,6 +612,14 @@ export class InputManager {
         }
       }
     }
+
+    // Process control pad input (left side joystick for altitude/yaw)
+    if (this.controlPad && this.controlPad.isActive()) {
+      // Vertical = altitude (up/down)
+      this.inputState.altitudeInput = this.controlPad.getVertical();
+      // Horizontal = yaw rotation (left/right turn)
+      this.inputState.lookDelta.x += this.controlPad.getHorizontal() * 3.0; // Sensitivity multiplier
+    }
   }
 
   // Keyboard rotation speed (degrees per frame at 60fps)
@@ -791,7 +811,7 @@ export class InputManager {
     const yawFromGamma = gamma; // -90 to 90
 
     // Pitch: Use beta difference for vertical look
-    // Tilt phone forward to look down, back to look up
+    // Tilt phone forward to look up, back to look down (inverted)
     const deltaBeta = beta - (this.gyroInitialBeta ?? 45);
 
     // Sensitivity adjustment - reduced for easier control
@@ -805,8 +825,8 @@ export class InputManager {
     // Update input state with gyro values (clamped)
     // Yaw: tilt phone left/right
     this.inputState.gyroYaw = Math.max(-maxYaw, Math.min(maxYaw, -yawFromGamma * yawSensitivity));
-    // Pitch: tilt phone forward/back
-    this.inputState.gyroPitch = Math.max(-maxPitch, Math.min(maxPitch, -deltaBeta * pitchSensitivity));
+    // Pitch: tilt phone forward/back (inverted: forward = up, back = down)
+    this.inputState.gyroPitch = Math.max(-maxPitch, Math.min(maxPitch, deltaBeta * pitchSensitivity));
     // Roll: disabled for simpler control
     this.inputState.gyroRoll = 0;
   }
