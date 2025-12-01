@@ -118,15 +118,44 @@ export class GameStateManager {
     // Check if iOS requires permission (iOS 13+)
     const requiresPermission = typeof (DeviceOrientationEvent as any).requestPermission === 'function';
 
+    // Flag to prevent double execution from touchstart + click
+    let isProcessing = false;
+
     // Handler function for gyro permission request
     const handleGyroRequest = async (event: Event) => {
       event.preventDefault();
       event.stopPropagation();
 
+      // Prevent double execution
+      if (isProcessing) {
+        console.log('Gyro request already processing, ignoring');
+        return;
+      }
+
+      // Check if already enabled
+      const inputManager = InputManager.getInstance();
+      if (inputManager.isGyroEnabled()) {
+        console.log('Gyro already enabled');
+        // Update UI to reflect enabled state
+        gyroButton.classList.add('enabled');
+        gyroButton.innerHTML = '<span class="gyro-icon">✓</span><span>ジャイロON</span>';
+        if (gyroStatus) {
+          gyroStatus.textContent = 'ジャイロが有効です';
+          gyroStatus.style.color = '#00ff00';
+        }
+        return;
+      }
+
+      isProcessing = true;
       console.log('Gyro button tapped, requiresPermission:', requiresPermission);
 
+      // Update UI to show processing
+      if (gyroStatus) {
+        gyroStatus.textContent = '処理中...';
+        gyroStatus.style.color = '#ffff00';
+      }
+
       try {
-        const inputManager = InputManager.getInstance();
         const granted = await inputManager.requestGyroPermission();
         console.log('Gyro permission result:', granted);
 
@@ -161,13 +190,22 @@ export class GameStateManager {
           gyroStatus.textContent = 'エラーが発生しました。もう一度お試しください。';
           gyroStatus.style.color = '#ff4444';
         }
+      } finally {
+        // Reset processing flag after a short delay to prevent rapid re-taps
+        setTimeout(() => {
+          isProcessing = false;
+        }, 500);
       }
     };
 
-    // Add event listeners - use touchstart for mobile (required for iOS permission)
-    // touchstart is crucial because iOS requires permission request in direct user gesture
-    gyroButton.addEventListener('touchstart', handleGyroRequest, { passive: false });
-    // Also add click for mouse fallback
+    // Add event listeners - use touchend for more reliable mobile handling
+    // touchend fires after the touch is complete, preventing accidental double triggers
+    gyroButton.addEventListener('touchend', handleGyroRequest, { passive: false });
+    // Prevent touchstart from triggering click
+    gyroButton.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+    }, { passive: false });
+    // Also add click for mouse fallback (won't fire on touch devices due to preventDefault)
     gyroButton.addEventListener('click', handleGyroRequest);
 
     // Android: Show button, allow game start

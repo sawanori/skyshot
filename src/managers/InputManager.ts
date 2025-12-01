@@ -733,6 +733,12 @@ export class InputManager {
    * IMPORTANT: Must be called directly from user gesture (tap/click)
    */
   public async requestGyroPermission(): Promise<boolean> {
+    // Already enabled - return true immediately
+    if (this.gyroEnabled) {
+      console.log('Gyroscope already enabled');
+      return true;
+    }
+
     // Check if DeviceOrientationEvent exists
     if (!this.isGyroAvailable()) {
       console.log('DeviceOrientation not available');
@@ -772,13 +778,19 @@ export class InputManager {
    * Set up gyroscope event listener
    */
   private setupGyroscope(): void {
+    // Prevent duplicate listeners
+    if (this.gyroEnabled) {
+      console.log('Gyroscope already set up, skipping');
+      return;
+    }
+
     window.addEventListener('deviceorientation', (event) => {
       this.onDeviceOrientation(event);
     }, true);
 
     this.gyroEnabled = true;
     this.inputState.gyroActive = true;
-    console.log('Gyroscope enabled');
+    console.log('Gyroscope enabled and listener added');
   }
 
   /**
