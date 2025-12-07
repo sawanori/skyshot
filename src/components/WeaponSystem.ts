@@ -229,6 +229,11 @@ export class WeaponSystem {
    * Fire the weapon
    */
   public fire(): void {
+    // Trigger vibration on supported devices (Android)
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+
     // Play gun sound effect
     this.playGunSound();
 
